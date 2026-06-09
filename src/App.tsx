@@ -44,6 +44,7 @@ export default function App() {
   // Navigation & Workspace State
   const [activeSidebarTab, setActiveSidebarTab] = useState<string>("jobs");
   const [selectedSubPill, setSelectedSubPill] = useState<string>("jobs");
+  const [viewMode, setViewMode] = useState<"mixed" | "grid" | "list">("mixed");
 
   // Core Reactive Data Lists (backed by localStorage)
   const [jobs, setJobs] = useState<Job[]>(() => {
@@ -679,9 +680,52 @@ export default function App() {
                 })}
               </div>
 
-              <div className="text-xs text-gray-400 font-mono flex items-center gap-1 bg-white px-3 py-1 rounded-lg border border-gray-50">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block accent-pulse"></span>
-                <span>Systems online</span>
+              {/* Visual Presentation Modalities Switcher */}
+              <div className="flex items-center gap-1 bg-white p-1 rounded-2xl border border-gray-100 shadow-sm shrink-0">
+                <button
+                  onClick={() => {
+                    setViewMode("mixed");
+                    triggerToast("Switched to Premium Mixed Bento Discovery Mode.");
+                  }}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                    viewMode === "mixed"
+                      ? "bg-slate-900 text-white shadow-sm"
+                      : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+                  }`}
+                  title="Spotlight Featured & Unified stream"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Mixed Bento</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setViewMode("grid");
+                    triggerToast("Switched to Immersive Deck Grid Mode.");
+                  }}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                    viewMode === "grid"
+                      ? "bg-slate-900 text-white shadow-sm"
+                      : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+                  }`}
+                  title="Visual deck of cards"
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Discovery Grid</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setViewMode("list")}
+                  }
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                    viewMode === "list"
+                      ? "bg-slate-900 text-white shadow-sm"
+                      : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+                  }`}
+                  title="Elite streamlined row list"
+                >
+                  <Briefcase className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Elite Feed</span>
+                </button>
               </div>
             </div>
           </section>
@@ -794,8 +838,8 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Listings matching filters */}
-                  <div className="space-y-4">
+                  {/* Listings matching filters with dynamic presentation modalities */}
+                  <div className="space-y-6">
                     {filteredJobs.length === 0 ? (
                       <div className="text-center py-16 bg-white border border-gray-100 rounded-3xl space-y-4 mt-4">
                         <div className="text-4xl text-gray-300">🕵️‍♀️</div>
@@ -819,116 +863,411 @@ export default function App() {
                           Reset filters to base
                         </button>
                       </div>
-                    ) : (
-                      filteredJobs.map((job) => {
-                        const isJobSelected = selectedJob?.id === job.id;
-                        const isJobSaved = savedJobIds.includes(job.id);
-                        return (
-                          <div
-                            key={job.id}
-                            id={`job-card-${job.id}`}
-                            onClick={() => setSelectedJob(job)}
-                            className={`p-6 bg-white rounded-2xl border transition-all duration-300 cursor-pointer relative group flex flex-col sm:flex-row items-start justify-between gap-4 ${
-                              isJobSelected
-                                ? "border-[#ff385c]/30 shadow-md ring-1 ring-[#ff385c]/25 bg-rose-50/5"
-                                : "border-gray-100 hover:border-gray-200 hover:shadow-md"
-                            }`}
-                          >
-                            {/* Left part: logo & header specs */}
-                            <div className="flex gap-4 items-start">
-                              <div className="w-13 h-13 rounded-xl bg-gray-50 flex items-center justify-center font-display border border-gray-100 shadow-sm text-2xl shrink-0 group-hover:scale-105 transition">
-                                {job.companyLogo}
+                    ) : viewMode === "mixed" ? (
+                      // 🌌 MODE A: PREMIUM MIXED BENTO DISCOVERY FLOW
+                      <div className="space-y-8 animate-fadeIn">
+                        {/* 1. Bento Featured Section */}
+                        {(() => {
+                          const featured = filteredJobs.filter(j => j.isFeatured);
+                          const regular = filteredJobs.filter(j => !j.isFeatured);
+                          const displayFeatured = featured.length > 0 ? featured.slice(0, 3) : filteredJobs.slice(0, 2);
+                          const displayRegular = featured.length > 0 ? regular : filteredJobs.slice(2);
+
+                          return (
+                            <>
+                              <div className="space-y-4">
+                                <div className="flex items-center gap-2">
+                                  <Sparkles className="w-4 h-4 text-brand" />
+                                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-widest">Spotlight Opportunities</h4>
+                                  <span className="h-[1px] bg-slate-100 flex-1"></span>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                  {displayFeatured.map((job) => {
+                                    const isJobSelected = selectedJob?.id === job.id;
+                                    const isJobSaved = savedJobIds.includes(job.id);
+                                    return (
+                                      <div
+                                        key={job.id}
+                                        id={`job-card-featured-${job.id}`}
+                                        onClick={() => setSelectedJob(job)}
+                                        className={`p-6 rounded-3xl border transition-all duration-300 cursor-pointer relative group flex flex-col justify-between overflow-hidden min-h-[220px] ${
+                                          isJobSelected
+                                            ? "border-brand ring-1 ring-brand bg-gradient-to-br from-rose-50/10 to-brand/5 shadow-md"
+                                            : "border-gray-150/80 bg-gradient-to-br from-white to-slate-50/30 hover:border-brand/20 hover:shadow-lg hover:translate-y-[-2px]"
+                                        }`}
+                                      >
+                                        {/* Abstract geometric mesh background on spotlight cards */}
+                                        <div className="absolute -top-10 -right-10 w-32 h-32 bg-brand/4 rounded-full blur-2xl group-hover:bg-brand/8 transition-all duration-300 pointer-events-none" />
+
+                                        <div className="space-y-4">
+                                          {/* Logo row */}
+                                          <div className="flex items-start justify-between">
+                                            <div className="flex gap-3">
+                                              <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center font-display border border-gray-100 shadow-sm text-2.5xl shrink-0 group-hover:scale-105 transition-transform duration-300">
+                                                {job.companyLogo}
+                                              </div>
+                                              <div>
+                                                <span 
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    const mappedComp = SEED_COMPANIES.find(c => c.id === job.companyId);
+                                                    if (mappedComp) setSelectedCompany(mappedComp);
+                                                  }}
+                                                  className="text-[11px] text-slate-400 font-bold hover:text-brand tracking-wider uppercase cursor-pointer hover:underline block"
+                                                >
+                                                  {job.companyName}
+                                                </span>
+                                                <div className="text-[10px] font-mono text-slate-400">
+                                                  {job.department}
+                                                </div>
+                                              </div>
+                                            </div>
+
+                                            <button
+                                              onClick={(e) => toggleSaveJob(job.id, e)}
+                                              className={`p-2 rounded-xl border transition ${
+                                                isJobSaved
+                                                  ? "bg-[#ff385c]/10 border-[#ff385c]/20 text-brand"
+                                                  : "bg-white border-gray-200 text-gray-400 hover:text-gray-900 hover:border-gray-300"
+                                              }`}
+                                              title={isJobSaved ? "Unsave role" : "Save role"}
+                                            >
+                                              <Bookmark className="w-3.5 h-3.5 fill-current text-current" />
+                                            </button>
+                                          </div>
+
+                                          {/* Mid portion */}
+                                          <div className="space-y-1.5">
+                                            <h3 className="text-base font-bold text-gray-900 leading-snug group-hover:text-brand transition duration-200">
+                                              {job.title}
+                                            </h3>
+                                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-medium text-slate-500">
+                                              <span className="flex items-center gap-1">
+                                                <MapPin className="w-3 h-3 text-gray-400 shrink-0" />
+                                                {job.location}
+                                              </span>
+                                              <span className="flex items-center gap-1">
+                                                <Globe className="w-3 h-3 text-gray-400 shrink-0" />
+                                                {job.remote}
+                                              </span>
+                                            </div>
+                                          </div>
+
+                                          {/* Tech badge flow */}
+                                          <div className="flex flex-wrap gap-1">
+                                            {job.tags.slice(0, 3).map((tag, i) => (
+                                              <span key={i} className="bg-slate-100/60 hover:bg-slate-100 text-slate-650 text-[10px] font-semibold px-2 py-0.5 rounded-lg border border-slate-200/40">
+                                                {tag}
+                                              </span>
+                                            ))}
+                                          </div>
+                                        </div>
+
+                                        {/* Bottom Action bar */}
+                                        <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
+                                          <div className="space-y-0.5">
+                                            <span className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold block">Salary Compensation</span>
+                                            <span className="font-mono font-bold text-[11px] text-slate-800 bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md border border-emerald-150/10 inline-block">
+                                              {job.salaryString}
+                                            </span>
+                                          </div>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setShowApplyModal(job);
+                                            }}
+                                            className="px-3.5 py-1.5 bg-slate-900 text-white text-[11px] font-semibold rounded-xl hover:bg-brand transition-all flex items-center gap-1"
+                                          >
+                                            <span>Apply</span>
+                                            <ArrowUpRight className="w-3 h-3" />
+                                          </button>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
                               </div>
-                              <div className="space-y-1.5">
-                                <div className="flex items-center flex-wrap gap-2">
+
+                              {/* 2. Streams segment */}
+                              {displayRegular.length > 0 && (
+                                <div className="space-y-4">
+                                  <div className="flex items-center gap-2 pt-2">
+                                    <Layers className="w-4 h-4 text-slate-400" />
+                                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Active Directory Stream</h4>
+                                    <span className="h-[1px] bg-slate-100 flex-1"></span>
+                                  </div>
+
+                                  <div className="space-y-3.5">
+                                    {displayRegular.map((job) => {
+                                      const isJobSelected = selectedJob?.id === job.id;
+                                      const isJobSaved = savedJobIds.includes(job.id);
+                                      return (
+                                        <div
+                                          key={job.id}
+                                          id={`job-card-regular-${job.id}`}
+                                          onClick={() => setSelectedJob(job)}
+                                          className={`p-4 bg-white rounded-2xl border transition-all duration-200 cursor-pointer relative group flex flex-col sm:flex-row items-center justify-between gap-4 ${
+                                            isJobSelected
+                                              ? "border-brand/40 shadow-sm ring-1 ring-brand/25 bg-rose-50/5"
+                                              : "border-gray-150/60 hover:border-gray-250 hover:bg-slate-50/20"
+                                          }`}
+                                        >
+                                          <div className="flex gap-4 items-center w-full sm:w-auto min-w-0">
+                                            <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center font-display border border-gray-100 shadow-sm text-lg shrink-0 group-hover:scale-105 transition-transform">
+                                              {job.companyLogo}
+                                            </div>
+                                            <div className="min-w-0">
+                                              <div className="flex items-center gap-2">
+                                                <span 
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    const mappedComp = SEED_COMPANIES.find(c => c.id === job.companyId);
+                                                    if (mappedComp) setSelectedCompany(mappedComp);
+                                                  }}
+                                                  className="text-[11px] font-bold text-slate-400 hover:text-brand tracking-wide hover:underline cursor-pointer uppercase"
+                                                >
+                                                  {job.companyName}
+                                                </span>
+                                                <span className="text-[10px] font-mono text-gray-400 uppercase">
+                                                  • {job.department}
+                                                </span>
+                                              </div>
+                                              <h4 className="text-sm font-bold text-gray-800 group-hover:text-brand transition truncate leading-tight mt-0.5">
+                                                {job.title}
+                                              </h4>
+                                            </div>
+                                          </div>
+
+                                          <div className="flex items-center justify-between sm:justify-end gap-5 w-full sm:w-auto shrink-0 border-t sm:border-t-0 border-slate-50 pt-3 sm:pt-0">
+                                            <div className="flex items-center gap-3 text-xs text-slate-500">
+                                              <span className="hidden md:flex items-center gap-1 text-[11px]">
+                                                <MapPin className="w-3 h-3 text-slate-400" />
+                                                {job.location.split(",")[0]}
+                                              </span>
+                                              <span className="flex items-center gap-1 text-[11px]">
+                                                <Globe className="w-3 h-3 text-slate-400" />
+                                                {job.remote}
+                                              </span>
+                                              <span className="font-mono font-semibold text-[11px] text-slate-750 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-lg shadow-2xs">
+                                                {job.salaryString}
+                                              </span>
+                                            </div>
+
+                                            <div className="flex items-center gap-2 shrink-0">
+                                              <button
+                                                onClick={(e) => toggleSaveJob(job.id, e)}
+                                                className={`p-2 rounded-xl border transition ${
+                                                  isJobSaved
+                                                    ? "bg-[#ff385c]/10 border-[#ff385c]/20 text-brand"
+                                                    : "bg-white border-gray-250 hover:bg-slate-50 text-gray-400 hover:text-gray-900"
+                                                }`}
+                                              >
+                                                <Bookmark className="w-3 h-3 fill-current" />
+                                              </button>
+                                              <button
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setShowApplyModal(job);
+                                                }}
+                                                className="px-3 py-1.5 bg-slate-100 hover:bg-brand hover:text-white border border-slate-200/80 text-slate-700 text-[11px] font-semibold rounded-xl transition"
+                                              >
+                                                Apply
+                                              </button>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </div>
+                    ) : viewMode === "grid" ? (
+                      // 🎚️ MODE B: IMMERSIVE CARD DECK GRID
+                      <div 
+                        className={`grid grid-cols-1 ${
+                          selectedJob ? "sm:grid-cols-1 xl:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3"
+                        } gap-6 animate-fadeIn`}
+                      >
+                        {filteredJobs.map((job) => {
+                          const isJobSelected = selectedJob?.id === job.id;
+                          const isJobSaved = savedJobIds.includes(job.id);
+                          return (
+                            <div
+                              key={job.id}
+                              id={`job-card-grid-${job.id}`}
+                              onClick={() => setSelectedJob(job)}
+                              className={`p-5 bg-white rounded-3xl border transition-all duration-300 cursor-pointer relative group flex flex-col justify-between overflow-hidden min-h-[190px] ${
+                                isJobSelected
+                                  ? "border-brand ring-1 ring-brand bg-gradient-to-br from-rose-50/10 to-brand/5 shadow-md"
+                                  : "border-gray-150/80 hover:border-brand/20 hover:shadow-md hover:translate-y-[-1px]"
+                              }`}
+                            >
+                              <div className="space-y-3.5">
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="flex gap-2.5">
+                                    <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center font-display border border-slate-100 shadow-sm text-xl shrink-0 group-hover:scale-105 transition-transform">
+                                      {job.companyLogo}
+                                    </div>
+                                    <div>
+                                      <span 
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          const mappedComp = SEED_COMPANIES.find(c => c.id === job.companyId);
+                                          if (mappedComp) setSelectedCompany(mappedComp);
+                                        }}
+                                        className="text-[11px] font-bold text-slate-400 hover:text-brand tracking-wider uppercase cursor-pointer hover:underline block leading-tight"
+                                      >
+                                        {job.companyName}
+                                      </span>
+                                      <div className="text-[9px] font-mono text-gray-400 mt-0.5">
+                                        {job.department}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <button
+                                    onClick={(e) => toggleSaveJob(job.id, e)}
+                                    className={`p-1.5 rounded-lg border transition ${
+                                      isJobSaved
+                                        ? "bg-brand/10 border-brand/20 text-brand"
+                                        : "bg-white border-gray-250 text-gray-400 hover:text-gray-900"
+                                    }`}
+                                  >
+                                    <Bookmark className="w-3 h-3 fill-current" />
+                                  </button>
+                                </div>
+
+                                <div className="space-y-1">
+                                  <h4 className="text-sm font-bold text-gray-900 group-hover:text-brand transition leading-snug">
+                                    {job.title}
+                                  </h4>
+                                  <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-slate-500">
+                                    <span className="flex items-center gap-0.5">
+                                      <MapPin className="w-3 h-3 text-slate-400" />
+                                      {job.location}
+                                    </span>
+                                    <span className="flex items-center gap-0.5">
+                                      <Globe className="w-3 h-3 text-slate-400" />
+                                      {job.remote}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="flex flex-wrap gap-1">
+                                  {job.tags.slice(0, 3).map((tag, idx) => (
+                                    <span key={idx} className="bg-slate-50 text-slate-600 text-[10px] font-medium px-2 py-0.5 rounded border border-slate-100">
+                                      {tag}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                                <span className="font-mono text-[11px] font-bold text-slate-800 bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-lg">
+                                  {job.salaryString}
+                                </span>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowApplyModal(job);
+                                  }}
+                                  className="px-3 py-1.5 bg-slate-900 hover:bg-brand text-white text-[10px] font-bold rounded-lg transition"
+                                >
+                                  Apply
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      // 💬 MODE C: ELITE COMPACT FEED
+                      <div className="space-y-3 animate-fadeIn">
+                        {filteredJobs.map((job) => {
+                          const isJobSelected = selectedJob?.id === job.id;
+                          const isJobSaved = savedJobIds.includes(job.id);
+                          return (
+                            <div
+                              key={job.id}
+                              id={`job-card-list-${job.id}`}
+                              onClick={() => setSelectedJob(job)}
+                              className={`p-4 bg-white rounded-2xl border transition-all duration-200 cursor-pointer relative group flex flex-col md:flex-row items-center justify-between gap-4 ${
+                                isJobSelected
+                                  ? "border-brand shadow-sm bg-rose-50/5 ring-1 ring-brand/10"
+                                  : "border-gray-100 hover:border-gray-200 hover:bg-slate-50/40"
+                              }`}
+                            >
+                              <div className="flex gap-4 items-center w-full md:w-5/12 min-w-0">
+                                <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center border border-gray-100 shadow-sm text-lg shrink-0">
+                                  {job.companyLogo}
+                                </div>
+                                <div className="min-w-0">
+                                  <h4 className="text-sm font-bold text-gray-900 group-hover:text-brand transition truncate leading-tight">
+                                    {job.title}
+                                  </h4>
                                   <span 
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       const mappedComp = SEED_COMPANIES.find(c => c.id === job.companyId);
                                       if (mappedComp) setSelectedCompany(mappedComp);
                                     }}
-                                    className="text-xs text-slate-500 font-bold hover:text-brand tracking-wide hover:underline cursor-pointer"
+                                    className="text-[11px] text-slate-450 font-bold uppercase tracking-wider hover:text-brand cursor-pointer mt-0.5 inline-block"
                                   >
                                     {job.companyName}
                                   </span>
-                                  {job.isFeatured && (
-                                    <span className="bg-[#ff385c]/8 text-brand text-[9px] uppercase font-mono font-bold px-2 py-0.5 rounded tracking-wide">
-                                      High Funding
-                                    </span>
-                                  )}
-                                  <span className="text-[10px] font-mono text-gray-400">
-                                    {job.department}
-                                  </span>
                                 </div>
+                              </div>
 
-                                <h2 className="text-base font-bold text-gray-900 leading-tight group-hover:text-brand transition">
-                                  {job.title}
-                                </h2>
+                              <div className="flex gap-2 items-center flex-wrap w-full md:w-4/12 text-xs text-slate-500">
+                                <span className="bg-slate-100 text-slate-600 text-[10px] font-semibold px-2 py-0.5 rounded-md">
+                                  {job.department}
+                                </span>
+                                <span className="flex items-center gap-0.5 text-[11px]">
+                                  <MapPin className="w-3 h-3 text-slate-400" />
+                                  {job.location}
+                                </span>
+                                <span className="flex items-center gap-0.5 text-[11px]">
+                                  <Globe className="w-3 h-3 text-slate-400" />
+                                  {job.remote}
+                                </span>
+                              </div>
 
-                                <div className="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs font-medium text-gray-500">
-                                  <span className="flex items-center gap-1">
-                                    <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                                    {job.location}
-                                  </span>
-                                  <span className="flex items-center gap-1">
-                                    <Globe className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                                    {job.remote}
-                                  </span>
-                                  <span className="flex items-center gap-1">
-                                    <DollarSign className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                                    <span className="font-mono font-semibold text-gray-700">{job.salaryString}</span>
-                                  </span>
-                                </div>
+                              <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-3/12 shrink-0 md:border-t-0 border-t border-slate-50 pt-2 md:pt-0">
+                                <span className="font-mono text-xs font-bold text-slate-800 bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md">
+                                  {job.salaryString}
+                                </span>
 
-                                {/* Experience tags */}
-                                <div className="flex flex-wrap gap-1 pt-1.5">
-                                  <span className="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1">
-                                    <GraduationCap className="w-3 h-3" />
-                                    {job.experienceRequired}+ Yrs Exp ({job.experienceTier})
-                                  </span>
-                                  {job.tags.slice(0, 3).map((tag, i) => (
-                                    <span key={i} className="bg-slate-50 text-slate-600 text-[10px] font-medium px-2 py-0.5 rounded border border-slate-100">
-                                      {tag}
-                                    </span>
-                                  ))}
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={(e) => toggleSaveJob(job.id, e)}
+                                    className={`p-2 rounded-xl border transition ${
+                                      isJobSaved
+                                        ? "bg-[#ff385c]/10 border-[#ff385c]/20 text-brand"
+                                        : "bg-white border-gray-200 text-gray-400 hover:text-gray-900"
+                                    }`}
+                                  >
+                                    <Bookmark className="w-3.5 h-3.5 fill-current" />
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setShowApplyModal(job);
+                                    }}
+                                    className="px-3.5 py-1.5 bg-slate-900 hover:bg-brand text-white text-[11px] font-semibold rounded-xl transition"
+                                  >
+                                    Apply
+                                  </button>
                                 </div>
                               </div>
                             </div>
-
-                            {/* Right part: Action controls */}
-                            <div className="w-full sm:w-auto flex sm:flex-col justify-between items-end gap-3 shrink-0 self-stretch sm:self-auto border-t sm:border-t-0 border-gray-100 pt-3 sm:pt-0">
-                              <span className="text-[10px] font-mono text-gray-400 self-center sm:self-auto uppercase tracking-wider">
-                                Posted {job.postedAt}
-                              </span>
-
-                              <div className="flex items-center gap-2 w-full sm:w-auto">
-                                <button
-                                  id={`job-save-btn-${job.id}`}
-                                  onClick={(e) => toggleSaveJob(job.id, e)}
-                                  className={`p-2.5 rounded-xl border transition ${
-                                    isJobSaved
-                                      ? "bg-[#ff385c]/10 border-[#ff385c]/20 text-brand"
-                                      : "bg-white border-gray-200 text-gray-400 hover:text-gray-900 hover:border-gray-300"
-                                  }`}
-                                  title={isJobSaved ? "Unsave career Listing" : "Save career Listing"}
-                                >
-                                  <Bookmark className="w-4 h-4 fill-current text-current" />
-                                </button>
-                                <button
-                                  id={`job-quick-apply-${job.id}`}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setShowApplyModal(job);
-                                  }}
-                                  className="flex-1 sm:flex-none px-4 py-2.5 bg-brand text-white text-xs font-semibold rounded-xl hover:bg-brand-hover tracking-wider transition shadow-sm"
-                                >
-                                  Instant Setup
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })
+                          );
+                        })}
+                      </div>
                     )}
                   </div>
                 </div>
