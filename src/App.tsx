@@ -24,6 +24,7 @@ import {
   Layers,
   Lock,
   X,
+  Menu,
   ChevronRight,
   Filter,
   TrendingUp,
@@ -109,6 +110,51 @@ export default function App() {
   const [showPostJobModal, setShowPostJobModal] = useState<boolean>(false);
   const [showApplyModal, setShowApplyModal] = useState<Job | null>(null);
   const [feedbackToast, setFeedbackToast] = useState<string | null>(null);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState<boolean>(false);
+
+  // Extended Interactive Journey States
+  const [applyStep, setApplyStep] = useState<number>(1);
+  const [isParsingResume, setIsParsingResume] = useState<boolean>(false);
+  const [parsingProgress, setParsingProgress] = useState<number>(0);
+  const [resumeMatchScore, setResumeMatchScore] = useState<number | null>(null);
+  const [isGeneratingCover, setIsGeneratingCover] = useState<boolean>(false);
+
+  // Recruiter Chatbot
+  const [activeInterviewAppId, setActiveInterviewAppId] = useState<string | null>(null);
+  const [chatMessages, setChatMessages] = useState<Array<{ sender: "user" | "bot"; text: string; timestamp: string }>>([]);
+  const [isRecruiterTyping, setIsRecruiterTyping] = useState<boolean>(false);
+  const [chatInput, setChatInput] = useState<string>("");
+  const [currentChatQuestionIdx, setCurrentChatQuestionIdx] = useState<number>(0);
+
+  // Coding Sandbox Challenge
+  const [activeSandboxAppId, setActiveSandboxAppId] = useState<string | null>(null);
+  const [sandboxCode, setSandboxCode] = useState<string>(`// Optimize Atlas layer matching algorithm
+function findOptimalWeights(coordinates: number[], dimensions: number): number {
+  // TODO: Fast Dot Product & cosine distance optimization
+  let sum = 0;
+  for(let i = 0; i < coordinates.length; i++) {
+    sum += coordinates[i];
+  }
+  return sum / dimensions;
+}`);
+  const [sandboxConsole, setSandboxConsole] = useState<string[]>([]);
+  const [isCompilingSandbox, setIsCompilingSandbox] = useState<boolean>(false);
+  const [sandboxSuccess, setSandboxSuccess] = useState<boolean>(false);
+
+  // Founders Portal Verification
+  const [isFounderVerified, setIsFounderVerified] = useState<boolean>((() => {
+    return localStorage.getItem("atlas_founder_verified") === "true";
+  })());
+  const [showFounderAuthModal, setShowFounderAuthModal] = useState<boolean>(false);
+  const [founderAuthToken, setFounderAuthToken] = useState<string>("");
+  const [isVerifyingFounder, setIsVerifyingFounder] = useState<boolean>(false);
+  
+  // Custom Ventures Pitch Details
+  const [selectedVCPartner, setSelectedVCPartner] = useState<any | null>(null);
+  const [showPitchScheduler, setShowPitchScheduler] = useState<boolean>(false);
+  const [pitchDate, setPitchDate] = useState<string>("2026-06-11");
+  const [pitchTime, setPitchTime] = useState<string>("11:00 AM");
+  const [pitchBrief, setPitchBrief] = useState<string>("");
 
   // Search, Hierarchy, and Filtering States
   const [textSearch, setTextSearch] = useState<string>("");
@@ -225,7 +271,46 @@ export default function App() {
     });
   };
 
-  // Handle Drag & Drop events
+  // Custom automatic Cover Letter generator matching job specifications
+  const generateAICoverLetterText = (job: Job) => {
+    return `Subject: Expressing high alignment for ${job.title} at ${job.companyName}
+
+Dear Hiring Managers at ${job.companyName},
+
+I am writing to express my strong intent for the ${job.title} position listed on your secure Atlas channel. As an AI-focused builder with high commitment, I have been actively designing robust architectures centered around ${job.tags.slice(0, 3).join(", ") || "transformational components"}.
+
+Your work at ${job.companyName} aligns perfectly with my professional goals, particularly your innovations in ${job.department}. My background includes deploying highly reliable React/TypeScript/Python systems, and I am eager to apply my technical stances directly to your objectives.
+
+Thank you very much for your time and indexing consideration.
+
+Sincerely,
+Saravanan Kumar`;
+  };
+
+  // Simulated AI PDF Resume Parser
+  const triggerResumeSimulationParsing = (fileName: string) => {
+    setIsParsingResume(true);
+    setParsingProgress(0);
+    setResumeMatchScore(null);
+    let prog = 0;
+    const intervalId = setInterval(() => {
+      prog += 10;
+      setParsingProgress(prog);
+      if (prog >= 100) {
+        clearInterval(intervalId);
+        setTimeout(() => {
+          setIsParsingResume(false);
+          const score = Math.floor(Math.random() * 8) + 90; // Generate dynamic match score: 90 - 97%
+          setResumeMatchScore(score);
+          triggerToast(`Resume indexing parsed. Standard match score evaluated at ${score}%!`);
+          // Automatically advance to Step 3 (Cover letter step / review) if parsing takes place
+          setApplyStep(3);
+        }, 300);
+      }
+    }, 120);
+  };
+
+  // Handle Drag & Drop events (USABILITY PATTERNS COMPLIANT)
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDraggingFile(true);
@@ -245,6 +330,7 @@ export default function App() {
         resumeName: file.name,
         resumeRawText: `Content extracted from simulated parsing of local document: ${file.name} (${Math.round(file.size / 1024)} KB)`
       }));
+      triggerResumeSimulationParsing(file.name);
     }
   };
 
@@ -256,16 +342,32 @@ export default function App() {
         resumeName: file.name,
         resumeRawText: `Content extracted from simulated parsing of local document: ${file.name} (${Math.round(file.size / 1024)} KB)`
       }));
+      triggerResumeSimulationParsing(file.name);
     }
   };
 
-  // Handle Apply Submission
+  // Cover Letter AI Auto-Writer Handler
+  const handleAutoBuildCoverLetter = () => {
+    if (!showApplyModal) return;
+    setIsGeneratingCover(true);
+    setTimeout(() => {
+      setIsGeneratingCover(false);
+      const customLetter = generateAICoverLetterText(showApplyModal);
+      setApplicantForm(prev => ({
+        ...prev,
+        coverLetter: customLetter
+      }));
+      triggerToast("Cover letter custom-written via Atlas Intelligence!");
+    }, 1100);
+  };
+
+  // Handle Apply Submission Journey
   const handleApplyFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!showApplyModal) return;
 
     if (!applicantForm.name || !applicantForm.email || !applicantForm.resumeName) {
-      alert("Please type your name, email and upload a valid PDF/Word resume.");
+      alert("Please enter your name, email and upload your resume PDF to proceed.");
       return;
     }
 
@@ -285,15 +387,145 @@ export default function App() {
     };
 
     setApplications(prev => [applicationRecord, ...prev]);
-    setShowApplyModal(null);
-    triggerToast(`Successfully applied to ${showApplyModal.companyName} for ${showApplyModal.title}!`);
+    // Transit to success onboarding step rather than closing
+    setApplyStep(4);
+    triggerToast(`Created submittal record to ${showApplyModal.companyName} in active tracking index.`);
+  };
 
-    // Reset applicant state but preserve default info for speed
-    setApplicantForm(prev => ({
-      ...prev,
-      coverLetter: "",
-      portfolioUrl: ""
-    }));
+  // Interactive Screening Recruiter Chatbot Handlers
+  const startRecruiterInterviewChat = (appId: string, jobTitle: string, companyName: string) => {
+    setActiveInterviewAppId(appId);
+    setCurrentChatQuestionIdx(0);
+    setIsRecruiterTyping(true);
+    setChatMessages([]);
+    
+    setTimeout(() => {
+      const greetText = `Greetings, ${applicantForm.name}! I am Atlas Recruit Bot 🤖, your automated pre-screening AI companion for the ${jobTitle} opening at ${companyName}.\n\nLet's run a brief, high-fidelity technical alignment chat. \n\n**To start: What specific engineering principles or robust architectural design choices do you feel are most vital for building reliable software platforms?**`;
+      setChatMessages([
+        {
+          sender: "bot",
+          text: greetText,
+          timestamp: new Date().toLocaleTimeString()
+        }
+      ]);
+      setIsRecruiterTyping(false);
+    }, 1000);
+  };
+
+  const submitInterviewMessage = () => {
+    if (!chatInput.trim() || !activeInterviewAppId) return;
+
+    const userMsg = {
+      sender: "user" as const,
+      text: chatInput,
+      timestamp: new Date().toLocaleTimeString()
+    };
+
+    setChatMessages(prev => [...prev, userMsg]);
+    setChatInput("");
+    setIsRecruiterTyping(true);
+
+    // Dynamic state evaluation response
+    setTimeout(() => {
+      let responseText = "";
+      if (currentChatQuestionIdx === 0) {
+        responseText = `Excellent evaluation! Focusing on low-latency microservices and robust clean typing creates high infrastructural durability.\n\n**Next query: Web platforms frequently face real-time data spikes. How do you construct caching strategies or use responsive visual hooks (like useEffect cleanup and memoization) to keep UI experiences fluid and prevent infinite renders?**`;
+        setCurrentChatQuestionIdx(1);
+        setIsRecruiterTyping(false);
+        setChatMessages(prev => [...prev, {
+          sender: "bot",
+          text: responseText,
+          timestamp: new Date().toLocaleTimeString()
+        }]);
+      } else {
+        responseText = `Splendid answer! Your conceptual alignment coefficients are off the charts. High modularity, TypeScript safety, and proper state structures indicate senior developer patterns.\n\n**INTERVIEW RATING:** Passed with **94% Alignment Index**! \n\nI have successfully upgraded your application status from **"Applied"** to **"Interviewing"** and unlocked your automated **Technical Sandbox Code Challenge**! Good luck!`;
+        
+        // Update applications database
+        setApplications(prev => prev.map(a => {
+          if (a.id === activeInterviewAppId) {
+            return {
+              ...a,
+              status: "Interviewing"
+            };
+          }
+          return a;
+        }));
+
+        setIsRecruiterTyping(false);
+        setChatMessages(prev => [...prev, {
+          sender: "bot",
+          text: responseText,
+          timestamp: new Date().toLocaleTimeString()
+        }]);
+        triggerToast("Upgrade: Application advanced to Intercom Screen Phase!");
+      }
+    }, 1400);
+  };
+
+  // Compile & run simulated unit tests inside code playground sandbox
+  const handleRunSandboxTests = () => {
+    setIsCompilingSandbox(true);
+    setSandboxConsole([
+      "> tsc --noEmit",
+      "> tsc compiled successfully. Launching unit tests..."
+    ]);
+
+    setTimeout(() => {
+      setSandboxConsole(prev => [...prev, "[RUN] test_weights_correctness_scaling: PASSED (1.1ms)"]);
+    }, 450);
+
+    setTimeout(() => {
+      setSandboxConsole(prev => [...prev, "[RUN] test_dimension_bounds_checking: PASSED (0.9ms)"]);
+    }, 900);
+
+    setTimeout(() => {
+      setSandboxConsole(prev => [
+        ...prev,
+        "[RUN] test_high_concurrency_load_100k: PASSED (14.2ms)",
+        "✔ STATUS: 3 of 3 unit tests matched absolute precision criteria!",
+        "Perfect layer alignment score verified."
+      ]);
+      setIsCompilingSandbox(false);
+      setSandboxSuccess(true);
+      triggerToast("Sandbox system tests completed successfully!");
+
+      if (activeSandboxAppId) {
+        setApplications(prev => prev.map(a => {
+          if (a.id === activeSandboxAppId) {
+            return {
+              ...a,
+              status: "Offered"
+            };
+          }
+          return a;
+        }));
+        triggerToast("🎉 CONGRATULATIONS: Employer Offer Letter unlocked!");
+      }
+    }, 1600);
+  };
+
+  // Handles Founders Sandbox Authentication
+  const handleFoundersAuthenticate = (token: string) => {
+    setIsVerifyingFounder(true);
+    setTimeout(() => {
+      setIsVerifyingFounder(false);
+      setIsFounderVerified(true);
+      localStorage.setItem("atlas_founder_verified", "true");
+      setShowFounderAuthModal(false);
+      triggerToast("Atlas Founders Network Auth verified! Welcome back, partner.");
+    }, 1200);
+  };
+
+  // Submit Strategic Pitch Message simulation
+  const handleSendStrategicPitch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pitchBrief.trim() || !selectedVCPartner) return;
+    
+    triggerToast(`Strategic Brief successfully securely routed to investment committee at ${selectedVCPartner.name}...`);
+    setPitchBrief("");
+    setTimeout(() => {
+      triggerToast(`Response received from ${selectedVCPartner.name}: "We love this vector pipeline description. Let's schedule a video screening brief!"`);
+    }, 3200);
   };
 
   // Process filters
@@ -329,9 +561,20 @@ export default function App() {
   const savedAndFilteredJobs = jobs.filter(job => savedJobIds.includes(job.id));
 
   return (
-    <div className="min-h-screen bg-[#fafbfc] text-gray-900 font-sans flex antialiased">
+    <div className="min-h-screen bg-[#fafbfc] text-gray-900 font-sans flex antialiased relative overflow-x-hidden md:overflow-x-visible">
+      
+      {/* Mobile Sidebar Overlay Backdrop */}
+      {isMobileSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs z-20 md:hidden animate-fade-in"
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
+      )}
+
       {/* 1. Left Sidebar Navigation Panel */}
-      <aside className="w-80 bg-white border-r border-gray-100 flex flex-col shrink-0 sticky top-0 h-screen select-none z-10">
+      <aside className={`w-80 bg-white border-r border-gray-100 flex flex-col shrink-0 h-screen select-none z-30 transition-transform duration-300 fixed md:sticky top-0 left-0 md:translate-x-0 ${
+        isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
+      }`}>
         <div className="p-6 pb-4 flex items-center justify-between">
           {/* Logo with matching vector element */}
           <div className="flex items-center gap-3">
@@ -343,9 +586,18 @@ export default function App() {
               <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest block font-medium">Intelligence</span>
             </div>
           </div>
-          <span className="bg-red-50 text-brand text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full">
-            v3.6
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="bg-red-50 text-brand text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full">
+              v3.6
+            </span>
+            <button
+              onClick={() => setIsMobileSidebarOpen(false)}
+              className="p-1.5 text-gray-500 hover:text-gray-950 hover:bg-gray-105 rounded-lg md:hidden transition"
+              title="Close Sidebar"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Navigation Row Items */}
@@ -370,6 +622,7 @@ export default function App() {
                 id={`sidebar-tab-${item.id}`}
                 onClick={() => {
                   setActiveSidebarTab(item.id);
+                  setIsMobileSidebarOpen(false);
                   if (item.id === "jobs" || item.id === "discover") {
                     setSelectedSubPill(item.id);
                   } else {
@@ -408,7 +661,10 @@ export default function App() {
 
           <button
             id="sidebar-tab-saved"
-            onClick={() => setActiveSidebarTab("saved")}
+            onClick={() => {
+              setActiveSidebarTab("saved");
+              setIsMobileSidebarOpen(false);
+            }}
             className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
               activeSidebarTab === "saved"
                 ? "bg-[#ff385c]/8 text-brand font-semibold"
@@ -426,7 +682,10 @@ export default function App() {
 
           <button
             id="sidebar-tab-applications"
-            onClick={() => setActiveSidebarTab("applications")}
+            onClick={() => {
+              setActiveSidebarTab("applications");
+              setIsMobileSidebarOpen(false);
+            }}
             className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
               activeSidebarTab === "applications"
                 ? "bg-[#ff385c]/8 text-brand font-semibold"
@@ -486,16 +745,26 @@ export default function App() {
       <main className="flex-1 flex flex-col bg-[#fafbfc] min-w-0">
         
         {/* Top Navbar */}
-        <header className="sticky top-0 bg-white/80 backdrop-filter backdrop-blur-md border-b border-gray-100 px-8 py-4 flex items-center justify-between z-10">
-          <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
-            <span className="hover:text-gray-900 cursor-pointer">Atlas Intelligence</span>
-            <ChevronRight className="w-3.5 h-3.5 text-gray-300" />
-            <span className="text-gray-900 capitalize font-semibold">{activeSidebarTab} Hub</span>
+        <header className="sticky top-0 bg-white/80 backdrop-filter backdrop-blur-md border-b border-gray-100 px-4 md:px-8 py-4 flex items-center justify-between z-10">
+          <div className="flex items-center gap-3">
+            {/* Hamburger helper for mobile support */}
+            <button
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="p-1.5 hover:bg-gray-100 text-gray-600 rounded-lg md:hidden transition shrink-0"
+              title="Open Navigation"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-1.5 md:gap-2 text-xs font-medium text-gray-500 overflow-hidden">
+              <span className="hover:text-gray-900 cursor-pointer hidden sm:inline">Atlas Intelligence</span>
+              <ChevronRight className="w-3.5 h-3.5 text-gray-300 hidden sm:inline" />
+              <span className="text-gray-900 capitalize font-semibold truncate">{activeSidebarTab} Hub</span>
+            </div>
           </div>
 
           <div className="flex items-center gap-4">
             {/* Quick Live stats pill */}
-            <div className="flex items-center gap-6 bg-gray-50 px-4 py-1.5 rounded-full border border-gray-100 text-xs font-mono text-gray-600">
+            <div className="hidden sm:flex items-center gap-6 bg-gray-55 px-4 py-1.5 rounded-full border border-gray-100 text-xs font-mono text-gray-600">
               <div>
                 <span className="text-gray-400">Total Jobs: </span>
                 <span className="text-gray-900 font-semibold">{STATISTICS.totalJobs}</span>
@@ -518,10 +787,10 @@ export default function App() {
         </header>
 
         {/* Inner Content Area */}
-        <div className="p-8 max-w-7xl mx-auto w-full space-y-8 flex-1">
+        <div className="p-4 sm:p-8 max-w-7xl mx-auto w-full space-y-6 sm:space-y-8 flex-1">
           
           {/* Main High-Impact Header Section mirroring screens */}
-          <section className="text-center md:text-left md:flex md:items-center md:justify-between bg-gradient-to-br from-white to-gray-50/50 p-8 rounded-3xl border border-gray-100 shadow-sm relative overflow-hidden">
+          <section className="text-center md:text-left md:flex md:items-center md:justify-between bg-gradient-to-br from-white to-gray-50/50 p-6 sm:p-8 rounded-3xl border border-gray-100 shadow-sm relative overflow-hidden">
             <div className="absolute right-0 top-0 h-full w-1/3 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-rose-100/30 via-transparent to-transparent pointer-events-none"></div>
             
             <div className="space-y-4 max-w-3xl relative z-10">
@@ -1013,7 +1282,6 @@ export default function App() {
                 </div>
               )}
 
-              {/* MY APPLICATIONS PORTAL */}
               {activeSidebarTab === "applications" && (
                 <div className="space-y-6">
                   <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
@@ -1039,7 +1307,7 @@ export default function App() {
                       </div>
                     ) : (
                       applications.map((app) => (
-                        <div key={app.id} className="p-6 bg-white rounded-2xl border border-gray-100 hover:border-gray-200 transition space-y-4">
+                        <div key={app.id} className="p-6 bg-white rounded-2xl border border-gray-100 hover:border-gray-200 transition space-y-4 text-left">
                           <div className="flex items-start justify-between gap-4 flex-wrap">
                             <div className="flex gap-4">
                               <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center font-display border border-gray-100 shadow-sm text-2xl shrink-0">
@@ -1092,13 +1360,137 @@ export default function App() {
                               </div>
                             )}
                             {app.coverLetter && (
-                              <div className="space-y-1 pt-1">
+                              <div className="space-y-1 pt-1 border-b border-gray-100 pb-2">
                                 <span className="text-gray-400 font-medium block">Cover Letter Brief:</span>
                                 <p className="text-gray-600 bg-white p-2.5 rounded border border-gray-100 italic leading-relaxed text-[11px]">
                                   "{app.coverLetter}"
                                 </p>
                               </div>
                             )}
+
+                            {/* DYNAMIC PIPELINE JOURNEY (CTA ADVANCED STEPS) */}
+                            <div className="pt-3 space-y-3">
+                              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block font-mono">Verified Recruitment Pipeline Progress</span>
+                              
+                              <div className="relative pl-6 space-y-4 before:content-[''] before:absolute before:left-[9px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-200">
+                                {/* Stage 1: Document Upload */}
+                                <div className="relative flex items-start gap-3">
+                                  <span className="absolute -left-[23px] top-0.5 w-[14px] h-[14px] bg-emerald-500 rounded-full border-4 border-white flex items-center justify-center"></span>
+                                  <div>
+                                    <h4 className="font-semibold text-gray-800">Stage 1: Credentials Registered</h4>
+                                    <p className="text-[10px] text-gray-400">PDF Document successfully indexed in local storage sandbox.</p>
+                                  </div>
+                                </div>
+
+                                {/* Stage 2: AI Compatibility parsing score */}
+                                <div className="relative flex items-start gap-3">
+                                  <span className="absolute -left-[23px] top-0.5 w-[14px] h-[14px] bg-emerald-500 rounded-full border-4 border-white flex items-center justify-center"></span>
+                                  <div>
+                                    <h4 className="font-semibold text-gray-800 flex items-center gap-2">
+                                      <span>Stage 2: AI Compatibility Coefficient evaluated</span>
+                                      <span className="bg-emerald-50 text-emerald-600 px-1.5 py-0.2 text-[9px] font-bold rounded">94% MATCH</span>
+                                    </h4>
+                                    <p className="text-[10px] text-gray-400">Core metrics align with the stated job descriptions.</p>
+                                  </div>
+                                </div>
+
+                                {/* Stage 3: Chatbot Screening Interview */}
+                                <div className="relative flex items-start gap-3">
+                                  <span className={`absolute -left-[23px] top-0.5 w-[14px] h-[14px] rounded-full border-4 border-white flex items-center justify-center ${
+                                    app.status !== "Applied" ? "bg-emerald-500" : "bg-brand animate-ping"
+                                  }`}></span>
+                                  <div className="space-y-1.5 w-full">
+                                    <h4 className="font-semibold text-gray-800">Stage 3: Cognitive Pre-screening Chatbot</h4>
+                                    {app.status === "Applied" ? (
+                                      <div className="bg-[#ff385c]/5 p-3 rounded-xl border border-[#ff385c]/10 space-y-2">
+                                        <p className="text-[10px] text-gray-500">Your screening evaluation is currently pending. Participate in a quick conversational chat with our recruitment model to advance.</p>
+                                        <button
+                                          type="button"
+                                          onClick={() => startRecruiterInterviewChat(app.id, app.jobTitle, app.companyName)}
+                                          className="px-3.5 py-2 bg-brand text-white text-[11px] font-bold rounded-lg hover:bg-brand-hover transition flex items-center gap-1 shadow-sm font-sans"
+                                        >
+                                          <span>💬 Conduct 10-Sec Pre-Screening Interview</span>
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <p className="text-[10px] text-emerald-600 font-semibold">✓ Pre-screening transcript graded with elite performance (94% Compatibility coefficient).</p>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Stage 4: Unit Test Coding assessment Sandbox */}
+                                <div className="relative flex items-start gap-3">
+                                  <span className={`absolute -left-[23px] top-0.5 w-[14px] h-[14px] rounded-full border-4 border-white flex items-center justify-center ${
+                                    app.status === "Offered" ? "bg-emerald-500" : app.status === "Interviewing" ? "bg-amber-400 animate-pulse" : "bg-slate-300"
+                                  }`}></span>
+                                  <div className="space-y-1.5 w-full">
+                                    <h4 className="font-semibold text-gray-800">Stage 4: Algorithmic Coding Challenge Sandbox</h4>
+                                    {app.status === "Applied" ? (
+                                      <p className="text-[10px] text-gray-400 italic">🔒 Completed Stage 3 screening first to unlock coding playground.</p>
+                                    ) : app.status === "Interviewing" ? (
+                                      <div className="bg-amber-50/50 p-3 rounded-xl border border-amber-200/50 space-y-2">
+                                        <p className="text-[10px] text-slate-500">Run our compiled regression test matrix of the alignment functions to prove your software stack craftsmanship.</p>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setActiveSandboxAppId(app.id);
+                                            setSandboxSuccess(false);
+                                            setSandboxConsole([]);
+                                          }}
+                                          className="px-3.5 py-2 bg-amber-500 text-white text-[11px] font-bold rounded-lg hover:bg-amber-600 transition flex items-center gap-1 shadow-sm font-sans"
+                                        >
+                                          <span>🧠 Launch Interactive Sandbox Challenge</span>
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <p className="text-[10px] text-emerald-600 font-semibold">✓ Systems validated. 3 of 3 unit tests compilation passed successfully.</p>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Stage 5: Strategic Partner Review & Contract */}
+                                <div className="relative flex items-start gap-3">
+                                  <span className={`absolute -left-[23px] top-0.5 w-[14px] h-[14px] rounded-full border-4 border-white flex items-center justify-center ${
+                                    app.status === "Offered" ? "bg-emerald-500" : "bg-slate-200"
+                                  }`}></span>
+                                  <div className="w-full">
+                                    <h4 className="font-semibold text-gray-800">Stage 5: Strategic Partner Review & Sealed Offer</h4>
+                                    {app.status === "Offered" ? (
+                                      <div className="mt-2 bg-emerald-50 rounded-2xl p-4 border border-emerald-100 text-center space-y-3 text-xs">
+                                        <div className="text-2xl">🎉</div>
+                                        <div>
+                                          <h5 className="font-bold text-gray-900">Employment Contract Generation Released!</h5>
+                                          <p className="text-[10px] text-gray-400 mt-0.5">The hiring board at {app.companyName} has issued your official sealed offer.</p>
+                                        </div>
+                                        <div className="bg-white p-3 rounded-xl shadow-sm border border-emerald-100/50 text-left space-y-2 text-[11px] text-gray-600">
+                                          <div className="flex justify-between">
+                                            <span>Standard Base Salary:</span>
+                                            <span className="font-bold text-gray-800 font-mono">₹1.48 Crores / Yr</span>
+                                          </div>
+                                          <div className="flex justify-between">
+                                            <span>Signing Bonus Option:</span>
+                                            <span className="font-bold text-gray-800 font-mono">₹25 Lakhs upfront</span>
+                                          </div>
+                                          <div className="flex justify-between">
+                                            <span>Startup Equity Grant:</span>
+                                            <span className="font-bold text-gray-800 font-mono">0.12% Stock Options</span>
+                                          </div>
+                                        </div>
+                                        <button
+                                          type="button"
+                                          onClick={() => triggerToast(`Offer aligned and signed successfully! Welcome to the premium elite team of ${app.companyName}.`)}
+                                          className="w-full py-2 bg-emerald-600 text-white font-bold text-[11px] hover:bg-emerald-700 rounded-lg transition font-sans"
+                                        >
+                                          ✓ Virtually Align & Sign This Contract
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <p className="text-[10px] text-gray-400 italic">🔒 Locked until all interview milestones are completely validated.</p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       ))
@@ -1455,8 +1847,14 @@ export default function App() {
 
             {/* RIGHT SIDEBAR / DETAILS WORKSPACE (DYNAMIC AND STICKY ON JOBS TAB) */}
             {((activeSidebarTab === "jobs" || activeSidebarTab === "saved") && selectedJob) && (
-              <div className="col-span-1 lg:col-span-5 space-y-6">
-                <div className="bg-white rounded-3xl border border-gray-100 p-6 sticky top-24 shadow-sm space-y-6">
+              <div className="fixed inset-0 lg:static bg-slate-950/40 lg:bg-transparent z-40 lg:z-auto flex items-end lg:items-start justify-end lg:justify-start col-span-1 lg:col-span-5 p-0 sm:p-4 lg:p-0">
+                {/* Backdrop dismiss overlay */}
+                <div 
+                  className="absolute inset-0 lg:hidden" 
+                  onClick={() => setSelectedJob(null)}
+                />
+                
+                <div className="bg-white w-full max-h-[85vh] lg:max-h-none rounded-t-3xl lg:rounded-3xl border-t lg:border border-gray-200 lg:border-gray-100 p-6 sticky lg:top-24 shadow-2xl lg:shadow-sm space-y-6 overflow-y-auto lg:overflow-y-visible z-10 lg:z-auto relative max-w-xl mx-auto lg:max-w-none">
                   
                   {/* Detailed Job Header & controls */}
                   <div className="flex items-start justify-between border-b border-gray-50 pb-4">
@@ -1586,156 +1984,298 @@ export default function App() {
         </div>
       </main>
 
-      {/* ==================================== MODAL OVERLAYS SECTION ==================================== */}
-
-      {/* 1. APPLY CAREER FORM MODAL (INTERACTIVE DRAWER) */}
+      {/* 1. APPLY CAREER FORM MODAL (INTERACTIVE MULTI-STEP ONBOARDING WIZARD) */}
       <AnimatePresence>
         {showApplyModal && (
-          <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-gray-905/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl border border-gray-100 flex flex-col"
+              className="bg-white rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl border border-gray-100 flex flex-col max-h-[90vh]"
             >
-              <div className="p-6 bg-[#ff385c]/5 border-b border-[#ff385c]/10 flex items-center justify-between">
+              <div className="p-6 bg-slate-900 text-white border-b border-slate-800 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-gray-100 text-xl font-display shadow-sm">
+                  <div className="w-10 h-10 bg-slate-850 rounded-xl flex items-center justify-center border border-slate-800 text-xl font-display shadow-sm">
                     {showApplyModal.companyLogo}
                   </div>
-                  <div>
-                    <span className="text-[10px] text-brand font-bold uppercase block tracking-wider">APPLY OPPORTUNITY</span>
-                    <h3 className="text-base font-bold text-slate-900">
-                      {showApplyModal.title}
+                  <div className="text-left">
+                    <span className="text-[9px] text-[#ff385c] font-bold uppercase tracking-widest block font-mono">Stage Onboarding: Step {applyStep} of 4</span>
+                    <h3 className="text-sm font-bold text-slate-100">
+                      Apply: {showApplyModal.title} @ {showApplyModal.companyName}
                     </h3>
                   </div>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setShowApplyModal(null)}
-                  className="p-1.5 hover:bg-white rounded-lg text-gray-500 hover:text-gray-900 transition border border-transparent hover:border-gray-100"
+                  className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <form onSubmit={handleApplyFormSubmit} className="p-6 space-y-4 overflow-y-auto max-h-[80vh]">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Name field */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block">Your Full Name *</label>
-                    <input
-                      type="text"
-                      required
-                      value={applicantForm.name}
-                      onChange={(e) => setApplicantForm(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="e.g. Saravanan Kumar"
-                      className="w-full bg-slate-50 border border-gray-100 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 focus:outline-none focus:border-brand focus:bg-white transition"
-                    />
-                  </div>
+              {/* Step Indicators pipeline bar */}
+              <div className="bg-slate-50 px-6 py-3 border-b border-gray-150 flex items-center justify-between text-[11px] font-semibold text-gray-500 font-mono">
+                <span className={applyStep === 1 ? "text-[#ff385c] font-extrabold" : "text-gray-400"}>1. Profile</span>
+                <span className="text-gray-300">→</span>
+                <span className={applyStep === 2 ? "text-[#ff385c] font-extrabold" : "text-gray-400"}>2. Resume Alignment</span>
+                <span className="text-gray-300">→</span>
+                <span className={applyStep === 3 ? "text-[#ff385c] font-extrabold" : "text-gray-400"}>3. Briefing Narrative</span>
+                <span className="text-gray-300">→</span>
+                <span className={applyStep === 4 ? "text-emerald-500 font-extrabold" : "text-gray-400"}>4. Success Onboarding</span>
+              </div>
 
-                  {/* Email field */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block">Your Email ID *</label>
-                    <input
-                      type="email"
-                      required
-                      value={applicantForm.email}
-                      onChange={(e) => setApplicantForm(prev => ({ ...prev, email: e.target.value }))}
-                      placeholder="kumarsaravanan2005@gmail.com"
-                      className="w-full bg-slate-50 border border-gray-100 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 focus:outline-none focus:border-brand focus:bg-white transition"
-                    />
-                  </div>
-                </div>
-
-                {/* Portfolio URL */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block">GitHub / Personal Portfolio URL</label>
-                  <input
-                    type="url"
-                    value={applicantForm.portfolioUrl}
-                    onChange={(e) => setApplicantForm(prev => ({ ...prev, portfolioUrl: e.target.value }))}
-                    placeholder="https://github.com/kumarsaravanan2005"
-                    className="w-full bg-slate-50 border border-gray-100 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 focus:outline-none focus:border-brand focus:bg-white transition"
-                  />
-                </div>
-
-                {/* Cover Letter text field */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block">Cover Letter Brief (Why you?)</label>
-                  <textarea
-                    rows={3}
-                    value={applicantForm.coverLetter}
-                    onChange={(e) => setApplicantForm(prev => ({ ...prev, coverLetter: e.target.value }))}
-                    placeholder="Briefly describe what sparks your passion, what models you've deployed, or why you are an ideal fit for this role."
-                    className="w-full bg-slate-50 border border-gray-100 rounded-xl p-3.5 text-xs text-gray-900 focus:outline-none focus:border-brand focus:bg-white transition resize-none leading-relaxed"
-                  />
-                </div>
-
-                {/* Resume Upload Drag and Drop box (USABILITY PATTERNS COMPLIANT) */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block">Attach CV / Resume (PDF / Word) *</label>
-                  
-                  <div
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                    onClick={() => fileInputRef.current?.click()}
-                    className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition ${
-                      isDraggingFile
-                        ? "border-brand bg-red-50/20"
-                        : applicantForm.resumeName
-                        ? "border-emerald-300 bg-emerald-50/10"
-                        : "border-gray-200 hover:border-gray-300 hover:bg-slate-50"
-                    }`}
-                  >
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleFileSelect}
-                      accept=".pdf,.doc,.docx"
-                      className="hidden"
-                    />
-
-                    <div className="space-y-2">
-                      <div className="flex justify-center">
-                        <Upload className={`w-8 h-8 ${applicantForm.resumeName ? "text-emerald-500" : "text-gray-400"}`} />
+              {/* Form panel body */}
+              <div className="p-6 overflow-y-auto space-y-4">
+                
+                {applyStep === 1 && (
+                  <div className="space-y-4 text-left">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Name field */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block">Your Full Name *</label>
+                        <input
+                          type="text"
+                          required
+                          value={applicantForm.name}
+                          onChange={(e) => setApplicantForm(prev => ({ ...prev, name: e.target.value }))}
+                          placeholder="e.g. Saravanan Kumar"
+                          className="w-full bg-slate-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 focus:outline-none focus:border-brand focus:bg-white transition"
+                        />
                       </div>
-                      
-                      {applicantForm.resumeName ? (
-                        <div>
-                          <p className="text-xs font-bold text-gray-800">
-                            Selected: <span className="text-emerald-600">{applicantForm.resumeName}</span>
-                          </p>
-                          <p className="text-[10px] text-gray-400 mt-1">Tap box area or drag over to replace doc file</p>
-                        </div>
-                      ) : (
-                        <div>
-                          <p className="text-xs font-semibold text-gray-700">
-                            Drag & drop your PDF resume here, or <span className="text-brand font-bold underline">browse files</span>
-                          </p>
-                          <p className="text-[10px] text-gray-400 mt-1">Allowed formats: PDF, DOC, DOCX up to 10MB</p>
-                        </div>
-                      )}
+
+                      {/* Email field */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block">Your Email ID *</label>
+                        <input
+                          type="email"
+                          required
+                          value={applicantForm.email}
+                          onChange={(e) => setApplicantForm(prev => ({ ...prev, email: e.target.value }))}
+                          placeholder="kumarsaravanan2005@gmail.com"
+                          className="w-full bg-slate-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 focus:outline-none focus:border-brand focus:bg-white transition font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Portfolio URL */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block">GitHub / Personal Portfolio URL</label>
+                      <input
+                        type="url"
+                        value={applicantForm.portfolioUrl}
+                        onChange={(e) => setApplicantForm(prev => ({ ...prev, portfolioUrl: e.target.value }))}
+                        placeholder="https://github.com/kumarsaravanan2005"
+                        className="w-full bg-slate-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 focus:outline-none focus:border-brand focus:bg-white transition font-mono"
+                      />
+                    </div>
+
+                    <div className="pt-4 border-t border-gray-100 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setApplyStep(2)}
+                        disabled={!applicantForm.name || !applicantForm.email}
+                        className="px-5 py-3 bg-brand text-white font-bold text-xs tracking-wider uppercase rounded-xl hover:bg-brand-hover transition disabled:opacity-50"
+                      >
+                        Proceed to AI Resume indexing →
+                      </button>
                     </div>
                   </div>
-                </div>
+                )}
 
-                <div className="pt-4 border-t border-gray-100 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowApplyModal(null)}
-                    className="flex-1 py-3 text-xs font-semibold text-gray-500 rounded-xl hover:text-gray-900 border border-gray-200 bg-white transition hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 py-3 bg-brand text-white font-bold text-xs tracking-wider uppercase rounded-xl hover:bg-brand-hover transition shadow-md shadow-[#ff385c]/20"
-                  >
-                    🚀 Finalize Submission
-                  </button>
-                </div>
-              </form>
+                {applyStep === 2 && (
+                  <div className="space-y-4 text-left">
+                    {/* Resume Upload Drag and Drop box (USABILITY PATTERNS COMPLIANT) */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block">Attach CV / Resume (PDF / Word) *</label>
+                      
+                      <div
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        onClick={() => fileInputRef.current?.click()}
+                        className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition ${
+                          isDraggingFile
+                            ? "border-brand bg-red-50/20"
+                            : applicantForm.resumeName
+                            ? "border-emerald-300 bg-emerald-50/10"
+                            : "border-gray-200 hover:border-gray-300 hover:bg-slate-50"
+                        }`}
+                      >
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          onChange={handleFileSelect}
+                          accept=".pdf,.doc,.docx"
+                          className="hidden"
+                        />
+
+                        <div className="space-y-2">
+                          <div className="flex justify-center">
+                            <Upload className={`w-8 h-8 ${applicantForm.resumeName ? "text-emerald-500" : "text-gray-400"}`} />
+                          </div>
+                          
+                          {applicantForm.resumeName ? (
+                            <div>
+                              <p className="text-xs font-bold text-gray-800">
+                                Selected: <span className="text-emerald-600">{applicantForm.resumeName}</span>
+                              </p>
+                              <p className="text-[10px] text-gray-400 mt-1">Tap box area or drag over to replace doc file</p>
+                            </div>
+                          ) : (
+                            <div>
+                              <p className="text-xs font-semibold text-gray-700">
+                                Drag & drop your PDF resume here, or <span className="text-brand font-bold underline">browse files</span>
+                              </p>
+                              <p className="text-[10px] text-gray-400 mt-1">Allowed formats: PDF, DOC, DOCX up to 10MB</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Parser loading animations */}
+                    {isParsingResume && (
+                      <div className="bg-slate-50 p-4 rounded-xl border border-gray-100 space-y-2">
+                        <div className="flex justify-between text-[11px] font-mono text-slate-500">
+                          <span>Retrieving semantic embeddings & blocks...</span>
+                          <span>{parsingProgress}%</span>
+                        </div>
+                        <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                          <div className="bg-brand h-full transition-all duration-100" style={{ width: `${parsingProgress}%` }}></div>
+                        </div>
+                      </div>
+                    )}
+
+                    {resumeMatchScore !== null && (
+                      <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 flex items-center justify-between animate-fade-in">
+                        <div className="space-y-1">
+                          <h4 className="text-xs font-bold text-emerald-950">Structural Vector Compatibility Matched!</h4>
+                          <p className="text-[10px] text-emerald-600 font-medium">Your resume exhibits deep compatibility coefficients and correct keywords.</p>
+                        </div>
+                        <span className="font-mono font-extrabold text-emerald-700 text-lg bg-white border border-emerald-200 rounded-xl px-3 py-1 bg-opacity-80">
+                          {resumeMatchScore}%
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="pt-4 border-t border-gray-100 flex justify-between gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setApplyStep(1)}
+                        className="py-3 text-xs font-semibold text-gray-500 rounded-xl hover:text-gray-900 border border-gray-200 bg-white transition hover:bg-gray-50 flex-1"
+                      >
+                        ← Back to Profile
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setApplyStep(3)}
+                        disabled={!applicantForm.resumeName}
+                        className="py-3 bg-brand text-white font-bold text-xs tracking-wider uppercase rounded-xl hover:bg-brand-hover transition disabled:opacity-50 flex-1"
+                      >
+                        Proceed to Cover Letter →
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {applyStep === 3 && (
+                  <form onSubmit={handleApplyFormSubmit} className="space-y-4 text-left">
+                    {/* Cover Letter text field */}
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center">
+                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block">Cover Letter Narrative Brief</label>
+                        <button
+                          type="button"
+                          onClick={() => handleAutoBuildCoverLetter()}
+                          disabled={isGeneratingCover}
+                          className="text-[10.5px] text-brand hover:text-brand-hover font-bold flex items-center gap-1 bg-rose-50 border border-[#ff385c]/10 px-2.5 py-1 rounded-lg transition"
+                        >
+                          <span>{isGeneratingCover ? "Synthesizing Brief..." : "🪄 Auto-Write Tailored Letter"}</span>
+                        </button>
+                      </div>
+                      <textarea
+                        rows={6}
+                        value={applicantForm.coverLetter}
+                        onChange={(e) => setApplicantForm(prev => ({ ...prev, coverLetter: e.target.value }))}
+                        placeholder="Briefly describe what sparks your passion, what models you've deployed, or why you are an ideal fit for this role."
+                        className="w-full bg-slate-50 border border-gray-200 rounded-xl p-3.5 text-xs text-gray-900 focus:outline-none focus:border-brand focus:bg-white transition resize-none leading-relaxed font-sans"
+                      />
+                    </div>
+
+                    <div className="pt-4 border-t border-gray-100 flex justify-between gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setApplyStep(2)}
+                        className="py-3 text-xs font-semibold text-gray-[#4b5563] rounded-xl hover:text-gray-900 border border-gray-200 bg-white transition hover:bg-gray-50 flex-1"
+                      >
+                        ← Back to Resume
+                      </button>
+                      <button
+                        type="submit"
+                        className="py-3 bg-brand text-white font-bold text-xs tracking-wider uppercase rounded-xl hover:bg-brand-hover transition shadow-md shadow-[#ff385c]/20 flex-1"
+                      >
+                        🚀 Finalize Submission
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {applyStep === 4 && (
+                  <div className="space-y-5 text-center py-6">
+                    <div className="mx-auto w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center text-3xl animate-bounce">
+                      🎉
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="text-base font-bold text-slate-950">Application Synthesized & Indexed!</h4>
+                      <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
+                        Hiring managers at <span className="font-bold text-slate-800">{showApplyModal.companyName}</span> have successfully received your credentials in their secure inbox pipeline.
+                      </p>
+                    </div>
+
+                    <div className="bg-slate-50 p-4 rounded-2xl border border-gray-100 text-left max-w-md mx-auto space-y-1.5">
+                      <span className="text-[10px] text-brand font-bold uppercase tracking-wider block font-mono">atlas onboarding advantage</span>
+                      <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                        Because of your elite compatibility match coefficient, you have been fast-tracked! Run your pre-screening interview checkpoint chat to promote your application profile instantly.
+                      </p>
+                    </div>
+
+                    <div className="pt-4 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-md mx-auto">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const lastCreatedAppId = `app-${Date.now()}`;
+                          const jobTitle = showApplyModal.title;
+                          const compName = showApplyModal.companyName;
+                          
+                          setShowApplyModal(null);
+                          setActiveSidebarTab("applications");
+                          
+                          // Launch chatbot for the latest app
+                          setTimeout(() => {
+                            startRecruiterInterviewChat(lastCreatedAppId, jobTitle, compName);
+                          }, 500);
+                        }}
+                        className="py-3 bg-brand text-white font-bold text-xs rounded-xl hover:bg-brand-hover transition shadow-md shadow-[#ff385c]/20 flex items-center justify-center gap-1 font-sans"
+                      >
+                        💬 Start Screening Chat Bot
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowApplyModal(null);
+                          setActiveSidebarTab("applications");
+                        }}
+                        className="py-3 text-xs font-semibold text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition flex items-center justify-center gap-1 font-sans"
+                      >
+                        📅 Review Submittals Tab
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+              </div>
             </motion.div>
           </div>
         )}
@@ -2072,6 +2612,215 @@ export default function App() {
                   >
                     🔎 View Career Openings
                   </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* 4. INTERACTIVE COGNITIVE RECRUITER CHATBOT PANEL */}
+      <AnimatePresence>
+        {activeInterviewAppId && (
+          <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="bg-white rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl border border-slate-100 flex flex-col h-[600px]"
+            >
+              <div className="p-5 bg-slate-900 text-white border-b border-gray-800 flex items-center justify-between">
+                <div className="flex gap-3.5 items-center text-left">
+                  <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-xl">
+                    🤖
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold block">Atlas AI Recruiter Bot</h3>
+                    <span className="text-[10px] text-orange-400 font-bold uppercase tracking-wider block font-mono">Cognitive pre-screening screening active</span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveInterviewAppId(null)}
+                  className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Chat Container */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50 text-left">
+                {chatMessages.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-gray-400 space-y-2">
+                    <p className="text-xs font-mono">Loading chatbot alignment layer...</p>
+                  </div>
+                ) : (
+                  chatMessages.map((msg, i) => (
+                    <div
+                      key={i}
+                      className={`flex flex-col max-w-[85%] space-y-1 ${
+                        msg.sender === "user" ? "ml-auto items-end" : "mr-auto items-start"
+                      }`}
+                    >
+                      <div
+                        className={`p-3.5 rounded-2xl text-xs leading-relaxed ${
+                          msg.sender === "user"
+                            ? "bg-[#ff385c] text-white rounded-tr-none font-medium"
+                            : "bg-white text-slate-800 rounded-tl-none border border-slate-100 shadow-sm"
+                        }`}
+                      >
+                        {msg.text}
+                      </div>
+                      <span className="text-[9px] text-slate-400 font-mono pl-1">{msg.timestamp}</span>
+                    </div>
+                  ))
+                )}
+
+                {isRecruiterTyping && (
+                  <div className="flex items-center gap-2 mr-auto bg-white p-3 border border-slate-100 rounded-2xl shadow-sm text-xs text-gray-500 font-mono">
+                    <div className="flex gap-1">
+                      <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></span>
+                      <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce delay-100"></span>
+                      <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce delay-200"></span>
+                    </div>
+                    <span>AI Model Evaluator checking transcript compatibility...</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Chat Form Action bar */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  submitInterviewMessage();
+                }}
+                className="p-4 bg-white border-t border-gray-100 flex gap-3 items-center"
+              >
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  placeholder="Type your strategic engineering principle explanation..."
+                  className="flex-1 bg-slate-50 border border-slate-200 focus:outline-none focus:border-[#ff385c] focus:bg-white px-4 py-3 rounded-xl text-xs text-slate-900 transition font-sans"
+                />
+                <button
+                  type="submit"
+                  disabled={!chatInput.trim()}
+                  className="bg-brand text-white font-bold py-3 px-5 rounded-xl text-xs hover:bg-brand-hover transition disabled:opacity-50 font-sans"
+                >
+                  Send Response
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* 5. INTERACTIVE CORESANDBOX CODE CHALLENGE PLAYGROUND */}
+      <AnimatePresence>
+        {activeSandboxAppId && (
+          <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-slate-900 text-slate-100 rounded-3xl w-full max-w-4xl overflow-hidden shadow-2xl border border-slate-800 flex flex-col h-[650px]"
+            >
+              {/* Header */}
+              <div className="p-5 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+                <div className="flex gap-3.5 items-center text-left">
+                  <div className="w-8 h-8 rounded bg-lime-500/10 border border-lime-500/20 flex items-center justify-center text-sm font-mono text-lime-400 font-bold">
+                    &lt;/&gt;
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold block text-slate-200">Atlas Automated Testing Terminal</h3>
+                    <span className="text-[10px] text-lime-400 font-bold uppercase tracking-wider block font-mono">Interactive algorithmic debugger loaded</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleRunSandboxTests()}
+                    disabled={isCompilingSandbox || sandboxSuccess}
+                    className="bg-lime-500 hover:bg-lime-600 disabled:bg-lime-900 disabled:opacity-60 text-slate-950 text-xs font-bold py-2 px-4 rounded-xl transition flex items-center gap-1.5 font-sans"
+                  >
+                    <span>{isCompilingSandbox ? "Compiling..." : sandboxSuccess ? "Passed System Tests ✔" : "Run Unit Test Matrix"}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveSandboxAppId(null)}
+                    className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-200 transition"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Challenge Grid Panels */}
+              <div className="flex-1 grid grid-cols-1 md:grid-cols-2 overflow-hidden">
+                {/* Left side info briefing */}
+                <div className="p-6 bg-slate-950/60 border-r border-slate-800 overflow-y-auto space-y-4 text-left">
+                  <span className="text-[9px] text-lime-500 font-bold tracking-widest font-mono uppercase">algorithmic sandbox challenge</span>
+                  <h4 className="text-base font-bold text-slate-200">System Optimizer: Dot Product Normalizer</h4>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Hiring boards evaluate system stability strictly. Here is the active layer matching optimizer code. Run the automated TypeScript transpilation to see regression results.
+                  </p>
+
+                  <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2 text-xs">
+                    <span className="text-[10px] font-bold text-slate-300 font-mono block">Requirements Matrix:</span>
+                    <ul className="space-y-1.5 list-disc pl-4 text-[11px] text-slate-400 font-mono">
+                      <li>Linear weight normalization sum bound validation.</li>
+                      <li>High-concurrency dot multiplication optimization.</li>
+                      <li>Floating point coordinate matches within 0.001 margin.</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-2">
+                    <span className="text-[10px] text-lime-400 font-mono block font-bold">Standard Workspace Files Indexed:</span>
+                    <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 flex items-center justify-between text-[11px] text-slate-400 font-mono">
+                      <span>✓ target_weights_optimizer.ts</span>
+                      <span className="bg-slate-900 text-lime-500 text-[9px] px-1.5 py-0.5 rounded border border-slate-800">Ready</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right side interactive coding box */}
+                <div className="flex flex-col overflow-hidden h-full">
+                  <div className="flex-1 bg-slate-950 p-1 flex flex-col">
+                    <span className="text-[10px] px-3 py-1 bg-slate-900 text-gray-400 self-start rounded-t-lg font-mono border-x border-t border-slate-800">
+                      weights_optimizer.ts
+                    </span>
+                    <textarea
+                      value={sandboxCode}
+                      onChange={(e) => setSandboxCode(e.target.value)}
+                      disabled={isCompilingSandbox || sandboxSuccess}
+                      className="flex-1 w-full bg-slate-900 focus:outline-none p-4 text-xs font-mono text-lime-400 border border-slate-850 rounded-b-xl leading-relaxed resize-none cursor-text select-text"
+                    />
+                  </div>
+
+                  {/* Console logs */}
+                  <div className="h-[180px] bg-black p-4 border-t border-slate-800 overflow-y-auto space-y-1 text-left font-mono text-[11px]">
+                    <span className="text-[10px] text-slate-500 font-bold block uppercase tracking-wider mb-1">Interactive Log Stream</span>
+                    {sandboxConsole.length === 0 ? (
+                      <p className="text-slate-600 italic">No output logged yet. Run regression testing grid above.</p>
+                    ) : (
+                      sandboxConsole.map((log, index) => (
+                        <p
+                          key={index}
+                          className={`${
+                            log.includes("PASSED") || log.includes("Success")
+                              ? "text-lime-500 font-semibold"
+                              : "text-slate-300"
+                          }`}
+                        >
+                          {log}
+                        </p>
+                      ))
+                    )}
+                  </div>
                 </div>
               </div>
             </motion.div>
