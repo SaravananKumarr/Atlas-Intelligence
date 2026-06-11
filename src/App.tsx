@@ -40,11 +40,187 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { Job, Company, JobApplication, RemoteType, ExperienceTier } from "./types";
 import { SEED_COMPANIES, SEED_JOBS, STATISTICS, formatCurrencyINR, convertTextToINR } from "./data";
+import { TOP_100_AI_STARTUPS_DOC, STATE_OF_AI_FUNDING_DOC, AI_AGENTS_LANDSCAPE_DOC, AI_CODING_IDES_DOC } from "./researchData";
+import { AT_LAS_FOUNDERS, AIFounder, calculateComputeEstimate } from "./foundersData";
+
+// Beautiful generic & brand-authentic company logo vectors mapped by companyId
+export function CompanyLogo({ companyId, companyName, className = "w-10 h-10" }: { companyId: string; companyName: string; className?: string }) {
+  const normalizedId = companyId.toLowerCase();
+  
+  if (normalizedId === "openai") {
+    return (
+      <div className={`flex items-center justify-center rounded-xl bg-[#0F172A] text-[#10a37f] border border-gray-100 shadow-3xs p-1.5 shrink-0 ${className}`}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-full h-full">
+          <path d="M12,4 a3,3 0 0,0 -3,3 c0,0.8 0.3,1.5 0.8,2 M12,4 a3,3 0 0,1 3,3 c0,0.8 -0.3,1.5 -0.8,2 M9.8,9 c-1,0.5 -1.8,1.6 -1.8,3 c0,1.7 1.3,3 3,3 M14.2,9 c1,0.5 1.8,1.6 1.8,3 c0,1.7 -1.3,3 -3,3 M11,15 c0,1.7 1.3,3 3,3 M13,15 c0,1.7 -1.3,3 -10-4" strokeLinecap="round"/>
+          <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+          <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z" fill="none" opacity="0.1"/>
+        </svg>
+      </div>
+    );
+  }
+  
+  if (normalizedId === "anthropic") {
+    return (
+      <div className={`flex items-center justify-center rounded-xl bg-[#FBF0E6] text-[#382F2D] border border-orange-100 shadow-3xs p-1.5 shrink-0 select-none ${className}`}>
+        <span className="font-serif font-extrabold text-sm tracking-tighter">▲</span>
+      </div>
+    );
+  }
+  
+  if (normalizedId === "perplexity") {
+    return (
+      <div className={`flex items-center justify-center rounded-xl bg-[#191A1D] text-[#39C3D2] border border-teal-950/20 shadow-3xs p-1.5 shrink-0 ${className}`}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-full h-full">
+          <path d="M12 4v16M4 12h16M6.3 6.3l11.4 11.4M6.3 17.7L17.7 6.3" strokeLinecap="round"/>
+          <circle cx="12" cy="12" r="2.5" fill="#191A1D" stroke="currentColor"/>
+        </svg>
+      </div>
+    );
+  }
+  
+  if (normalizedId === "cursor") {
+    return (
+      <div className={`flex items-center justify-center rounded-xl bg-black text-lime-400 border border-gray-900 shadow-3xs p-1.5 shrink-0 ${className}`}>
+        <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
+          <path d="M7 3l11 11h-5l5 7h-2.5l-5-7h-3.5z"/>
+        </svg>
+      </div>
+    );
+  }
+  
+  if (normalizedId === "elevenlabs") {
+    return (
+      <div className={`flex items-center justify-center rounded-xl bg-[#09090B] text-[#E5C384] border border-[#27272A] shadow-3xs p-1.5 shrink-0 ${className}`}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-full h-full">
+          <path d="M4 10v4M8 6v12M12 9v6M16 4v16M20 8v8" strokeLinecap="round"/>
+        </svg>
+      </div>
+    );
+  }
+  
+  if (normalizedId === "pinecone") {
+    return (
+      <div className={`flex items-center justify-center rounded-xl bg-[#0D2A1C] text-[#24C27E] border border-[#16432F] shadow-3xs p-1.5 shrink-0 ${className}`}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
+          <path d="M12 3l6 7h-4v6h4v5H6v-5h4v-6H6l6-7z" strokeLinejoin="round"/>
+        </svg>
+      </div>
+    );
+  }
+  
+  if (normalizedId === "cohere") {
+    return (
+      <div className={`flex items-center justify-center rounded-xl bg-[#DFF0E6] text-[#0A2215] border border-[#BCE2CD] shadow-3xs p-1.5 shrink-0 ${className}`}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
+          <circle cx="12" cy="12" r="7" strokeDasharray="3 2" />
+          <path d="M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z" fill="currentColor"/>
+        </svg>
+      </div>
+    );
+  }
+  
+  if (normalizedId === "mistral") {
+    return (
+      <div className={`flex items-center justify-center rounded-xl bg-[#FF4500] text-white border border-orange-200 shadow-3xs p-1.5 shrink-0 ${className}`}>
+        <span className="font-mono font-extrabold text-xs">M</span>
+      </div>
+    );
+  }
+
+  if (normalizedId === "scale" || normalizedId === "scaleai") {
+    return (
+      <div className={`flex items-center justify-center rounded-xl bg-black text-white border border-gray-800 shadow-3xs p-1 shrink-0 font-display font-semibold ${className}`}>
+        <span className="text-[11px] tracking-tighter">S.</span>
+      </div>
+    );
+  }
+
+  if (normalizedId === "databricks") {
+    return (
+      <div className={`flex items-center justify-center rounded-xl bg-gradient-to-br from-[#FF3621] to-[#E02F50] text-[#FFFFFF] border border-orange-100 shadow-3xs p-0.5 shrink-0 font-display font-black leading-none flex-col justify-center ${className}`}>
+        <span className="text-[10px]">DB</span>
+      </div>
+    );
+  }
+
+  if (normalizedId === "midjourney") {
+    return (
+      <div className={`flex items-center justify-center rounded-xl bg-[#03001C] text-indigo-200 border border-indigo-950 shadow-3xs p-1.5 shrink-0 ${className}`}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
+          <path d="M5 19s4-1 7-1 7 1 7 1v-2H5v2zM12 3v13M12 5l-6 6h6m0-7l6 6h-6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+    );
+  }
+
+  if (normalizedId === "vercel") {
+    return (
+      <div className={`flex items-center justify-center rounded-xl bg-black text-white border border-gray-900 shadow-3xs p-1.5 shrink-0 ${className}`}>
+        <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
+          <path d="M12 2L2 22h20L12 2z" />
+        </svg>
+      </div>
+    );
+  }
+
+  if (normalizedId === "huggingface") {
+    return (
+      <div className={`flex items-center justify-center rounded-xl bg-[#FFFDF0] text-[#D97706] border border-[#FDE047] shadow-3xs p-1 shrink-0 font-bold select-none text-sm leading-none ${className}`}>
+        🤗
+      </div>
+    );
+  }
+
+  // Beautiful fallback high-contrast initial badge
+  const initial = companyName ? companyName.charAt(0).toUpperCase() : "?";
+  const colors = [
+    "bg-red-50 text-red-600 border-red-100",
+    "bg-blue-50 text-blue-600 border-blue-100",
+    "bg-emerald-50 text-emerald-600 border-emerald-100",
+    "bg-amber-50 text-amber-600 border-amber-100",
+    "bg-indigo-50 text-indigo-600 border-indigo-100",
+    "bg-purple-50 text-purple-600 border-purple-100",
+    "bg-pink-50 text-pink-600 border-pink-100",
+    "bg-rose-50 text-rose-600 border-rose-100",
+  ];
+  const colorIndex = (companyName || "A").charCodeAt(0) % colors.length;
+  const pickedColor = colors[colorIndex];
+
+  return (
+    <div className={`flex items-center justify-center rounded-xl font-display font-medium select-none border text-xs ${pickedColor} ${className}`}>
+      {initial}
+    </div>
+  );
+}
 
 export default function App() {
   // Navigation & Workspace State
-  const [activeSidebarTab, setActiveSidebarTab] = useState<string>("jobs");
-  const [selectedSubPill, setSelectedSubPill] = useState<string>("jobs");
+  const [activeSidebarTab, setActiveSidebarTab] = useState<string>("discover");
+  const [selectedSubPill, setSelectedSubPill] = useState<string>("discover");
+  const [activeCategory, setActiveCategory] = useState<string>("All");
+  const [timeFilter, setTimeFilter] = useState<"all" | "24h" | "7d" | "30d">("all");
+
+  // Founders Page Interactive Hooks
+  const [customFounders, setCustomFounders] = useState<AIFounder[]>([]);
+  const [selectedFounder, setSelectedFounder] = useState<AIFounder | null>(null);
+  const [founderSearchText, setFounderSearchText] = useState<string>("");
+  const [showApplyFounderModal, setShowApplyFounderModal] = useState<boolean>(false);
+  
+  // Apply Founder Form Fields
+  const [newFounderName, setNewFounderName] = useState<string>("");
+  const [newFounderCompany, setNewFounderCompany] = useState<string>("");
+  const [newFounderBio, setNewFounderBio] = useState<string>("");
+  const [newFounderFocus, setNewFounderFocus] = useState<string>("");
+  const [newFounderCapital, setNewFounderCapital] = useState<string>("$2M - Seed");
+  const [newFounderStack, setNewFounderStack] = useState<string>("");
+  const [newFounderQuote, setNewFounderQuote] = useState<string>("");
+
+  // Interactive Compute Budget Estimator
+  const [estParamsBillion, setEstParamsBillion] = useState<number>(70);
+  const [estTokensTrillion, setEstTokensTrillion] = useState<number>(2.5);
+  const [estHardware, setEstHardware] = useState<"H105" | "H200" | "Blackwell" | string>("H200");
+  const [estGpus, setEstGpus] = useState<number>(2048);
+  const [estMfu, setEstMfu] = useState<number>(45);
 
   // Core Reactive Data Lists (backed by localStorage)
   const [jobs, setJobs] = useState<Job[]>(() => {
@@ -201,6 +377,56 @@ function findOptimalWeights(coordinates: number[], dimensions: number): number {
     setTimeout(() => {
       setFeedbackToast(null);
     }, 4500);
+  };
+
+  const triggerTXAndScrollToDirectory = () => {
+    setActiveSidebarTab("jobs");
+    setTimeout(() => {
+      const el = document.getElementById("job-board-directory-anchor");
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 100);
+  };
+
+  const downloadResearchPaper = (title: string) => {
+    let content = "";
+    let filename = "archive-document.md";
+
+    const normalizedTitle = title.toLowerCase();
+
+    if (normalizedTitle.includes("top 100") || normalizedTitle.includes("startups index")) {
+      content = TOP_100_AI_STARTUPS_DOC;
+      filename = "top_100_ai_startups_index_2026.md";
+    } else if (normalizedTitle.includes("funding") || normalizedTitle.includes("financial")) {
+      content = STATE_OF_AI_FUNDING_DOC;
+      filename = "state_of_ai_funding_q1_2026.md";
+    } else if (normalizedTitle.includes("agents") || normalizedTitle.includes("interpretability")) {
+      content = AI_AGENTS_LANDSCAPE_DOC;
+      filename = "ai_agents_mechanistic_interpretability_2026.md";
+    } else if (normalizedTitle.includes("coding ides") || normalizedTitle.includes("autocompression") || normalizedTitle.includes("benchmark")) {
+      content = AI_CODING_IDES_DOC;
+      filename = "ai_coding_ides_autocompression_benchmarks_2026.md";
+    } else {
+      content = `# ${title}\n\n*Atlas Intelligence Shared Document Archive*\n\nGenerated on ${new Date().toISOString()}`;
+      filename = `${normalizedTitle.replace(/[^a-z0-9]+/g, "_")}_2026.md`;
+    }
+
+    try {
+      const blob = new Blob([content], { type: "text/markdown;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      triggerToast(`📥 File download initiated: ${filename}`);
+    } catch (error) {
+      console.error("Failed to initiate file download inside browser sandboxed frame:", error);
+      triggerToast("⚠️ Sandbox restricted action. Download blocked by sandbox context.");
+    }
   };
 
   // Toggle saving a job
@@ -528,6 +754,29 @@ Saravanan Kumar`;
     }, 3200);
   };
 
+  // Helper to categorize AI jobs into exact human-readable roles automatically
+  const getJobCategory = (job: any): string => {
+    const title = job.title.toLowerCase();
+    
+    if (title.includes("research") || title.includes("scientist") || title.includes("rlhf") || title.includes("alignment") || title.includes("mechanistic") || title.includes("interpretability")) {
+      return "AI Researchers";
+    }
+    if (title.includes("infrastructure") || title.includes("mlops") || title.includes("hardware") || title.includes("lpu") || title.includes("network") || title.includes("systems") || title.includes("database") || title.includes("compiler") || title.includes("cloud") || title.includes("ops")) {
+      return "AI Infrastructure";
+    }
+    if (title.includes("security") || title.includes("safety") || title.includes("trust") || title.includes("red team") || title.includes("jailbreak") || title.includes("compliance")) {
+      return "AI Security";
+    }
+    if (title.includes("audio") || title.includes("voice") || title.includes("sound") || title.includes("synthesis") || title.includes("tts") || title.includes("video") || title.includes("diffusion") || title.includes("media") || title.includes("avatar")) {
+      return "AI Voice & Media";
+    }
+    if (title.includes("product manager") || title.includes(" pm") || title.includes("pm ") || title.includes("product lead") || title.includes("product strategy") || title.includes("product owner")) {
+      return "AI Product Managers";
+    }
+    // Default fallback to Software Developers
+    return "Software Developers";
+  };
+
   // Process filters
   const filteredJobs = jobs.filter(job => {
     const query = submitSearch.toLowerCase().trim() || textSearch.toLowerCase().trim();
@@ -554,7 +803,42 @@ Saravanan Kumar`;
       }
     }
 
-    return matchesQuery && matchesRemote && matchesExperience && matchesMinSalary && matchesLocation;
+    // Category Filter
+    let matchesCategory = true;
+    if (activeCategory !== "All") {
+      matchesCategory = (getJobCategory(job) === activeCategory);
+    }
+
+    // Time Filter (Last 24 hrs, last 7 days, last 30 days)
+    let matchesTime = true;
+    if (timeFilter !== "all") {
+      const post = job.postedAt.toLowerCase();
+      const isWithin24h = post.includes("h ago") || post.includes("now") || post.includes("1h");
+      
+      if (timeFilter === "24h") {
+        matchesTime = isWithin24h;
+      } else if (timeFilter === "7d") {
+        if (isWithin24h) {
+          matchesTime = true;
+        } else if (post.includes("d ago")) {
+          const daysNum = parseInt(post.replace(/[^0-9]/g, ""));
+          matchesTime = !isNaN(daysNum) && daysNum <= 7;
+        } else {
+          matchesTime = false;
+        }
+      } else if (timeFilter === "30d") {
+        if (isWithin24h) {
+          matchesTime = true;
+        } else if (post.includes("d ago")) {
+          const daysNum = parseInt(post.replace(/[^0-9]/g, ""));
+          matchesTime = !isNaN(daysNum) && daysNum <= 30;
+        } else {
+          matchesTime = false;
+        }
+      }
+    }
+
+    return matchesQuery && matchesRemote && matchesExperience && matchesMinSalary && matchesLocation && matchesCategory && matchesTime;
   });
 
   // Calculate unique locations in list for filter dropdown helpers
@@ -577,13 +861,15 @@ Saravanan Kumar`;
       }`}>
         <div className="p-6 pb-4 flex items-center justify-between">
           {/* Logo with matching vector element */}
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-brand flex items-center justify-center text-white font-display text-xl font-bold tracking-tight accent-glow">
-              A
-            </div>
+          <div className="flex items-center gap-2.5">
+            <svg viewBox="0 0 24 24" className="w-8 h-8 text-brand shrink-0" fill="currentColor">
+              <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" fill="currentColor" className="text-brand/10"/>
+              <path d="M12 6C8.68629 6 6 8.68629 6 12C6 15.3137 8.68629 18 12 18C15.3137 18 18 15.3137 18 12C18 8.68629 15.3137 6 12 6ZM12 8C14.2091 8 16 9.79086 16 12C16 14.2091 14.2091 16 12 16C9.79086 16 8 14.2091 8 12C8 9.79086 9.79086 8 12 8Z" fill="currentColor"/>
+              <circle cx="12" cy="12" r="2" fill="currentColor"/>
+            </svg>
             <div>
-              <span className="font-display text-lg font-bold text-gray-900 tracking-tight block">Atlas</span>
-              <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest block font-medium">Intelligence</span>
+              <span className="font-display text-base font-extrabold text-gray-950 tracking-tight block uppercase leading-none">Atlas</span>
+              <span className="text-[9px] font-mono text-gray-400 uppercase tracking-widest block font-semibold mt-0.5">Intelligence</span>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -787,173 +1073,288 @@ Saravanan Kumar`;
         </header>
 
         {/* Inner Content Area */}
-        <div className="p-4 sm:p-8 max-w-7xl mx-auto w-full space-y-6 sm:space-y-8 flex-1">
-          
-          {/* Main High-Impact Header Section mirroring screens */}
-          <section className="text-center md:text-left md:flex md:items-center md:justify-between bg-gradient-to-br from-white to-gray-50/50 p-6 sm:p-8 rounded-3xl border border-gray-100 shadow-sm relative overflow-hidden">
-            <div className="absolute right-0 top-0 h-full w-1/3 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-rose-100/30 via-transparent to-transparent pointer-events-none"></div>
-            
-            <div className="space-y-4 max-w-3xl relative z-10">
-              <div className="inline-flex items-center gap-2 bg-[#ff385c]/5 text-[#ff385c] px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>The Web's Premier Artificial Intelligence Career Portal</span>
-              </div>
-              <h1 className="text-3xl md:text-5xl font-display font-bold text-gray-900 leading-tight">
-                The Intelligence Layer <br />
-                <span className="bg-gradient-to-r from-brand to-pink-600 bg-clip-text text-transparent">
-                  For the AI Economy
-                </span>
-              </h1>
-              <p className="text-gray-500 text-sm md:text-base max-w-2xl leading-relaxed">
-                Connect and apply instantly to high-impact career options at elite builders driving global AGI capability, machine intelligence layers, and neural infrastructures.
-              </p>
-            </div>
-
-            <div className="mt-6 md:mt-0 relative z-10 shrink-0">
-              <button
-                onClick={() => setShowPostJobModal(true)}
-                className="w-full md:w-auto px-6 py-3.5 bg-brand text-white font-semibold rounded-2xl hover:bg-brand-hover tracking-wide transition shadow-md shadow-[#ff385c]/25 flex items-center justify-center gap-2.5"
-              >
-                <Plus className="w-5 h-5" />
-                <span>Post an Opportunity</span>
-              </button>
-            </div>
-          </section>
-
-          {/* Interactive Search Bar Panel and Pills */}
-          <section className="space-y-4">
-            <div className="bg-white p-3 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row gap-2 relative">
-              <div className="flex-1 flex items-center gap-3 px-3">
-                <Search className="w-5 h-5 text-gray-400 shrink-0" />
-                <input
-                  type="text"
-                  placeholder="Search jobs by title, company, stacks, locations, keywords..."
-                  value={textSearch}
-                  onChange={(e) => setTextSearch(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") setSubmitSearch(textSearch);
-                  }}
-                  className="w-full py-2 bg-transparent text-sm focus:outline-none placeholder-gray-400 font-medium text-gray-900"
-                />
-              </div>
-
-              {/* Advanced Filter Indicators (clickable to reset) */}
-              <div className="flex items-center gap-2 px-3 md:border-l md:border-gray-100">
-                <SlidersHorizontal className="w-4 h-4 text-gray-400 shrink-0" />
-                <span className="text-xs font-semibold text-gray-500">Filters:</span>
-                <div className="flex flex-wrap gap-1">
-                  {filterRemote !== "All" && (
-                    <span 
-                      onClick={() => setFilterRemote("All")} 
-                      className="bg-gray-100 hover:bg-red-50 hover:text-brand cursor-pointer text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1 transition"
-                    >
-                      {filterRemote} ✕
-                    </span>
-                  )}
-                  {filterExperience !== "All" && (
-                    <span 
-                      onClick={() => setFilterExperience("All")} 
-                      className="bg-gray-100 hover:bg-red-50 hover:text-brand cursor-pointer text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1 transition"
-                    >
-                      {filterExperience} ✕
-                    </span>
-                  )}
-                  {minSalarySlider > 0 && (
-                    <span 
-                      onClick={() => setMinSalarySlider(0)} 
-                      className="bg-gray-100 hover:bg-red-50 hover:text-brand cursor-pointer text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1 transition"
-                    >
-                      &gt;{formatCurrencyINR(minSalarySlider)} ✕
-                    </span>
-                  )}
-                  {filterLocation !== "All" && (
-                    <span 
-                      onClick={() => setFilterLocation("All")} 
-                      className="bg-gray-100 hover:bg-red-50 hover:text-brand cursor-pointer text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1 transition"
-                    >
-                      Loc: {filterLocation.replace("_", " ")} ✕
-                    </span>
-                  )}
-                  {filterRemote === "All" && filterExperience === "All" && minSalarySlider === 0 && filterLocation === "All" && (
-                    <span className="text-[10px] font-mono text-gray-400 italic">None active</span>
-                  )}
+        <div className="p-3 sm:p-6 max-w-7xl mx-auto w-full space-y-5 flex-1">
+          {/* Modern Space-Reduced Hero Section matching Aditi's design */}
+          {activeSidebarTab !== "discover" && (
+            <>
+              <div className="relative pt-2 pb-1">
+                {/* Soft pink gradient glow mimicking screenshot mesh */}
+                <div className="absolute right-0 top-0 h-48 w-48 sm:h-64 sm:w-64 bg-[radial-gradient(circle,_var(--tw-gradient-stops))] from-rose-150/40 via-transparent to-transparent pointer-events-none rounded-full blur-2xl z-0"></div>
+                
+                <div className="space-y-1.5 relative z-10 text-left">
+                  <h1 className="text-2xl sm:text-3.5xl lg:text-4.5xl font-display font-extrabold text-[#0F172A] tracking-tight leading-snug">
+                    Discover <span className="text-brand">AI Careers</span> <br className="hidden sm:inline" />
+                    Shaping the Future
+                  </h1>
+                  <p className="text-gray-500 text-xs sm:text-sm max-w-2xl font-medium leading-relaxed">
+                    The most comprehensive notice board on AI companies, research roles, and developer positions. Find actual opportunities at world-leading organizations; links redirect you straight to canonical company career sites.
+                  </p>
                 </div>
               </div>
 
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    setTextSearch("");
-                    setSubmitSearch("");
-                    setFilterRemote("All");
-                    setFilterExperience("All");
-                    setMinSalarySlider(0);
-                    setFilterLocation("All");
-                    triggerToast("Filter structures reset to default settings.");
-                  }}
-                  className="px-4 py-2.5 text-xs text-gray-500 hover:text-gray-900 border border-transparent hover:border-gray-200 rounded-xl font-medium transition"
-                  title="Clear all filters & query"
-                >
-                  Reset
-                </button>
-                <button
-                  onClick={() => setSubmitSearch(textSearch)}
-                  className="px-6 py-2.5 bg-brand text-white text-sm font-semibold rounded-xl hover:bg-brand-hover tracking-wide transition shadow-sm"
-                >
-                  Search
-                </button>
-              </div>
-            </div>
-
-            {/* Horizontal Sub-Navigation Selection Cards (mirroring screenshot horizontal category bars) */}
-            <div className="flex items-center justify-between border-b border-gray-100 pb-2 overflow-x-auto scrollbar-none">
-              <div className="flex gap-1.5 shrink-0">
-                {[
-                  { id: "all", label: "All Index", count: jobs.length },
-                  { id: "jobs", label: "Jobs", count: jobs.length },
-                  { id: "startups", label: "Startups", count: SEED_COMPANIES.length },
-                  { id: "research", label: "Research", count: 2 },
-                  { id: "funding", label: "Funding Rounds", count: 4 },
-                  { id: "saved", label: "Bookmarks", count: savedJobIds.length }
-                ].map((pill) => {
-                  const isPillActive = selectedSubPill === pill.id;
-                  return (
-                    <button
-                      key={pill.id}
-                      id={`pills-cat-${pill.id}`}
-                      onClick={() => {
-                        setSelectedSubPill(pill.id);
-                        if (pill.id === "saved" || pill.id === "startups") {
-                          setActiveSidebarTab(pill.id);
-                        } else if (pill.id === "jobs" || pill.id === "all") {
-                          setActiveSidebarTab("jobs");
-                        } else {
-                          setActiveSidebarTab(pill.id);
-                        }
+              {/* New Optimized Search Bar with relative time filters option */}
+              <section className="space-y-3 relative z-10">
+                <div className="bg-white p-2 rounded-2xl border border-gray-105 shadow-3xs flex flex-col md:flex-row gap-2 relative">
+                  <div className="flex-1 flex items-center gap-2 px-2">
+                    <Search className="w-4 h-4 text-gray-400 shrink-0" />
+                    <input
+                      type="text"
+                      placeholder="Search jobs by role title, company, stack, key skills..."
+                      value={textSearch}
+                      onChange={(e) => setTextSearch(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") setSubmitSearch(textSearch);
                       }}
-                      className={`px-4 py-2 text-xs font-semibold rounded-xl transition-all duration-200 flex items-center gap-2 ${
-                        isPillActive
-                          ? "bg-[#ff385c]/10 text-brand border border-[#ff385c]/25"
-                          : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-100"
-                      }`}
-                    >
-                      <span>{pill.label}</span>
-                      <span className={`text-[10px] font-mono rounded px-1.5 py-0.5 ${
-                        isPillActive ? "bg-[#ff385c]/15 text-brand" : "bg-gray-100 text-gray-400"
-                      }`}>
-                        {pill.count}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+                      className="w-full py-1.5 bg-transparent text-xs sm:text-sm focus:outline-none placeholder-gray-400 font-medium text-gray-900 border-none outline-none ring-0 appearance-none"
+                    />
+                  </div>
 
-              <div className="text-xs text-gray-400 font-mono flex items-center gap-1 bg-white px-3 py-1 rounded-lg border border-gray-50 bg-white shadow-3xs">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
-                <span>Systems online</span>
-              </div>
-            </div>
-          </section>
+                  {/* Precise Time Filters Indicator */}
+                  <div className="flex items-center gap-2 px-2.5 py-1 sm:py-0 border-t sm:border-t-0 md:border-l border-gray-100">
+                    <Calendar className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                    <span className="text-[10px] sm:text-xs font-semibold text-gray-500">Post Date:</span>
+                    <select
+                      value={timeFilter}
+                      onChange={(e) => {
+                        setTimeFilter(e.target.value as any);
+                        triggerToast(`Time filter adjusted: ${e.target.value === "all" ? "All Postings" : e.target.value === "24h" ? "Last 24 Hours" : e.target.value === "7d" ? "Last 7 Days" : "Last 30 Days"}`);
+                      }}
+                      className="bg-transparent text-[10px] sm:text-xs font-bold text-brand focus:outline-none cursor-pointer border-none outline-none appearance-none"
+                    >
+                      <option value="all">All Days</option>
+                      <option value="24h">Last 24 Hours</option>
+                      <option value="7d">Last 7 Days</option>
+                      <option value="30d">Last 30 Days</option>
+                    </select>
+                  </div>
+
+                  <div className="flex gap-1.5 shrink-0 justify-end">
+                    {(textSearch || submitSearch || filterRemote !== "All" || filterExperience !== "All" || minSalarySlider > 0 || filterLocation !== "All" || timeFilter !== "all" || activeCategory !== "All") && (
+                      <button
+                        onClick={() => {
+                          setTextSearch("");
+                          setSubmitSearch("");
+                          setFilterRemote("All");
+                          setFilterExperience("All");
+                          setMinSalarySlider(0);
+                          setFilterLocation("All");
+                          setTimeFilter("all");
+                          setActiveCategory("All");
+                          triggerToast("Filter parameters initialized to defaults.");
+                        }}
+                        className="px-3.5 py-2 text-xs text-slate-500 hover:text-slate-900 font-semibold transition"
+                      >
+                        Reset
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setSubmitSearch(textSearch)}
+                      className="px-5 py-2 bg-brand text-white text-xs sm:text-sm font-bold rounded-xl hover:bg-brand-hover tracking-wide transition shadow-sm shadow-[#ff385c]/10"
+                    >
+                      Search
+                    </button>
+                  </div>
+                </div>
+
+                {/* Quick sub-pill posting time triggers */}
+                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                  <span className="text-[9px] font-mono font-bold text-gray-400 uppercase tracking-widest mr-1">Time posting:</span>
+                  {[
+                    { id: "all", label: "All Postings" },
+                    { id: "24h", label: "Last 24 Hours" },
+                    { id: "7d", label: "Last 7 Days" },
+                    { id: "30d", label: "Last 30 Days" }
+                  ].map((pill) => {
+                    const isPillActive = timeFilter === pill.id;
+                    return (
+                      <button
+                        key={pill.id}
+                        onClick={() => {
+                          setTimeFilter(pill.id as any);
+                          triggerToast(`Filtered listings posted in ${pill.label}`);
+                        }}
+                        className={`px-3 py-1 rounded-full text-[10px] sm:text-xs font-semibold transition-all duration-150 ${
+                          isPillActive
+                            ? "bg-[#ff385c]/8 text-brand border border-[#ff385c]/15"
+                            : "bg-white text-gray-500 hover:bg-gray-50 border border-gray-100"
+                        }`}
+                      >
+                        {pill.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+
+              {/* Explore by Category direct filters mirroring screenshot */}
+              <section className="space-y-2.5 relative z-10 pt-1">
+                <div className="flex items-center justify-between border-b border-gray-100/50 pb-2">
+                  <div>
+                    <h2 className="text-xs sm:text-sm font-extrabold text-gray-950 uppercase tracking-wider font-display">Explore by Category</h2>
+                    <p className="text-[9px] text-gray-400 font-medium">Click on any role sector to immediately focus listings</p>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setActiveCategory("All");
+                      triggerTXAndScrollToDirectory();
+                    }}
+                    className="text-[10px] text-brand hover:underline font-bold"
+                  >
+                    Clear Category Filter →
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+                  {[
+                    { id: "AI Researchers", label: "AI Researchers", desc: "RLHF, alignment, mechanistic interpretability", icon: "🔬" },
+                    { id: "Software Developers", label: "Software Developers", desc: "LLM agents, autocomplete compilers, frontend Tools", icon: "💻" },
+                    { id: "AI Product Managers", label: "AI Product Managers", desc: "Interfaces, prompts, release delivery, strategy", icon: "🎯" },
+                    { id: "AI Infrastructure", label: "AI Infrastructure", desc: "Compute clusters, LPUs, custom hardware grids", icon: "🌐" },
+                    { id: "AI Security", label: "AI Security", desc: "Red teaming, guardrails, abuse monitoring, safety", icon: "🛡️" },
+                    { id: "AI Voice & Media", label: "AI Voice & Media", desc: "Text-to-speech, sound wave, generative video, diffusion", icon: "🔊" }
+                  ].map((cat) => {
+                    const isCatActive = activeCategory === cat.id;
+                    return (
+                      <div
+                        key={cat.id}
+                        onClick={() => {
+                          setActiveCategory(cat.id);
+                          triggerTXAndScrollToDirectory();
+                        }}
+                        className={`p-3 bg-white rounded-xl border relative flex flex-col justify-between hover:border-brand/40 hover:shadow-xs transition cursor-pointer select-none group ${
+                          isCatActive 
+                            ? "border-brand ring-1 ring-brand/25 bg-rose-50/5" 
+                            : "border-gray-105"
+                        }`}
+                      >
+                        <div>
+                          <div className="w-8 h-8 rounded-lg bg-[#ff385c]/5 text-brand flex items-center justify-center text-sm font-bold border border-brand/10">
+                            {cat.icon}
+                          </div>
+                          <h3 className="text-[11px] sm:text-xs font-bold text-gray-950 mt-2 leading-tight group-hover:text-brand transition">
+                            {cat.label}
+                          </h3>
+                          <p className="text-[9px] text-gray-400 mt-1 block leading-normal line-clamp-2">
+                            {cat.desc}
+                          </p>
+                        </div>
+                        
+                        <div className="flex justify-end mt-2">
+                          <div className={`w-5 h-5 rounded-full flex items-center justify-center border text-[9px] transition ${
+                            isCatActive ? "bg-brand text-white border-brand" : "bg-rose-50/30 text-brand border-brand/10"
+                          }`}>
+                            →
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+
+              {/* Trending AI Startups horizontal loop */}
+              <section className="space-y-2.5 relative z-10 pt-1">
+                <div className="flex items-center justify-between border-b border-gray-100/50 pb-2">
+                  <div>
+                    <h2 className="text-xs sm:text-sm font-extrabold text-gray-150 uppercase tracking-wider font-display">Trending AI Startups</h2>
+                    <p className="text-[9px] text-gray-400 font-medium">Organized sequentially matching your provided layout specification</p>
+                  </div>
+                  <span className="text-[9px] text-gray-400 font-mono font-bold uppercase py-0.5 px-2 bg-rose-50 text-brand rounded">Hot Teams</span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+                  {[
+                    { rank: 1, id: "openai", name: "OpenAI", field: "Foundation Models", loc: "SF, USA" },
+                    { rank: 2, id: "anthropic", name: "Anthropic", field: "AI Safety Research", loc: "SF, USA" },
+                    { rank: 3, id: "perplexity", name: "Perplexity", field: "AI Search Retrieval", loc: "SF, USA" },
+                    { rank: 4, id: "cursor", name: "Cursor Editor", field: "AI Assist Coding", loc: "SF, USA" },
+                    { rank: 5, id: "elevenlabs", name: "ElevenLabs", field: "Voice Synth & Audio", loc: "London, UK" }
+                  ].map((startup) => (
+                    <div
+                      key={startup.id}
+                      onClick={() => {
+                        setTextSearch(startup.name);
+                        setSubmitSearch(startup.name);
+                        triggerTXAndScrollToDirectory();
+                      }}
+                      className="p-3 bg-white rounded-xl border border-gray-105 relative hover:border-brand/40 hover:shadow-2xs transition cursor-pointer group flex flex-col justify-between"
+                    >
+                      <span className="absolute top-2.5 right-2.5 text-[8px] sm:text-[9px] font-bold bg-brand text-white w-4.5 h-4.5 rounded-full flex items-center justify-center font-mono">
+                        {startup.rank}
+                      </span>
+
+                      <div className="space-y-2 pb-1">
+                        <CompanyLogo companyId={startup.id} companyName={startup.name} className="w-9 h-9" />
+                        <div>
+                          <h4 className="text-xs font-bold text-gray-950 group-hover:text-brand transition truncate">{startup.name}</h4>
+                          <p className="text-[9px] text-gray-400 line-clamp-1 truncate">{startup.field}</p>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-gray-50 pt-1.5 mt-1.5 flex items-center justify-between text-[8px] sm:text-[9px] text-slate-500 font-bold leading-none">
+                        <span className="bg-[#ff385c]/5 text-[#ff385c] px-1.5 py-0.5 rounded-sm">Hiring</span>
+                        <span className="text-gray-400 select-none">{startup.loc}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* Featured Companies Grid with custom stats */}
+              <section className="space-y-2.5 relative z-10 pt-1">
+                <div className="flex items-center justify-between border-b border-gray-100/50 pb-2">
+                  <div>
+                    <h2 className="text-xs sm:text-sm font-extrabold text-gray-150 uppercase tracking-wider font-display">Featured Enterprises</h2>
+                    <p className="text-[9px] text-gray-400 font-medium">Pinnacle organizations supporting advanced neural computation</p>
+                  </div>
+                  <span className="text-[9px] text-gray-400 font-mono">Indices Verified</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                  {[
+                    { id: "openai", name: "OpenAI", hq: "San Francisco, CA", raised: "$17.8B", founded: 2015 },
+                    { id: "databricks", name: "Databricks", hq: "San Francisco, CA", raised: "$6.2B", founded: 2013 },
+                    { id: "scale", name: "Scale AI", hq: "San Francisco, CA", raised: "$1.6B", founded: 2016 },
+                    { id: "midjourney", name: "Midjourney", hq: "San Francisco, CA", raised: "$200M", founded: 2022 }
+                  ].map((co) => (
+                    <div
+                      key={co.id}
+                      onClick={() => {
+                        setTextSearch(co.name);
+                        setSubmitSearch(co.name);
+                        triggerTXAndScrollToDirectory();
+                      }}
+                      className="p-3 bg-white rounded-xl border border-gray-105 hover:border-brand/40 hover:shadow-2xs transition cursor-pointer relative overflow-hidden group flex flex-col justify-between h-28"
+                    >
+                      <div className="absolute right-0 top-0 h-full w-24 bg-gradient-to-l from-brand/5 via-transparent to-transparent pointer-events-none"></div>
+
+                      <div className="flex items-start gap-2 relative z-10">
+                        <CompanyLogo companyId={co.id} companyName={co.name} className="w-9 h-9" />
+                        <div className="overflow-hidden">
+                          <h4 className="text-xs font-bold text-gray-950 group-hover:text-brand transition truncate">{co.name}</h4>
+                          <p className="text-[8px] sm:text-[9px] text-gray-400 mt-0.5 truncate leading-none">{co.hq}</p>
+                          <span className="inline-block mt-1 text-[8px] bg-slate-50 text-slate-500 font-mono font-bold px-1.5 py-0.5 rounded leading-none">
+                            Active Index
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-1 border-t border-gray-50 pt-1.5 text-[9px] relative z-10 bg-white/95 mt-1.5">
+                        <div>
+                          <span className="text-gray-400 block text-[8px] uppercase font-semibold leading-none">Capital Raised</span>
+                          <span className="text-gray-950 font-bold font-mono leading-none">{co.raised}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-400 block text-[8px] uppercase font-semibold leading-none">Founded Year</span>
+                          <span className="text-gray-950 font-bold font-mono leading-none">{co.founded}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </>
+          )}
 
           {/* Toast Notification display */}
           <AnimatePresence>
@@ -977,6 +1378,9 @@ Saravanan Kumar`;
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Simple scroll trigger anchor node */}
+          <div id="job-board-directory-anchor"></div>
 
           {/* 3. CORE ROUTER WORKSPACE (DYNAMIC BASED ON SIDEBAR SELECTION) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -1105,9 +1509,7 @@ Saravanan Kumar`;
                           >
                             {/* Left part: logo & header specs */}
                             <div className="flex gap-4 items-start">
-                              <div className="w-13 h-13 rounded-xl bg-gray-50 flex items-center justify-center font-display border border-gray-100 shadow-sm text-2xl shrink-0 group-hover:scale-105 transition">
-                                {job.companyLogo}
-                              </div>
+                              <CompanyLogo companyId={job.companyId} companyName={job.companyName} className="w-13 h-13 shrink-0 group-hover:scale-105 transition" />
                               <div className="space-y-1.5">
                                 <div className="flex items-center flex-wrap gap-2">
                                   <span 
@@ -1247,9 +1649,7 @@ Saravanan Kumar`;
                             }`}
                           >
                             <div className="flex gap-4">
-                              <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center font-display border border-gray-100 shadow-sm text-xl shrink-0">
-                                {job.companyLogo}
-                              </div>
+                              <CompanyLogo companyId={job.companyId} companyName={job.companyName} className="w-12 h-12 shrink-0" />
                               <div className="space-y-1">
                                 <span className="text-xs text-gray-400 font-semibold uppercase">{job.companyName}</span>
                                 <h3 className="text-base font-bold text-gray-900 leading-tight">{job.title}</h3>
@@ -1310,9 +1710,7 @@ Saravanan Kumar`;
                         <div key={app.id} className="p-6 bg-white rounded-2xl border border-gray-100 hover:border-gray-200 transition space-y-4 text-left">
                           <div className="flex items-start justify-between gap-4 flex-wrap">
                             <div className="flex gap-4">
-                              <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center font-display border border-gray-100 shadow-sm text-2xl shrink-0">
-                                {app.companyLogo}
-                              </div>
+                              <CompanyLogo companyId={app.companyId || "openai"} companyName={app.companyName} className="w-12 h-12 shrink-0" />
                               <div className="space-y-1">
                                 <span className="text-xs text-slate-500 font-bold">{app.companyName}</span>
                                 <h3 className="text-base font-bold text-slate-900 leading-tight">{app.jobTitle}</h3>
@@ -1502,28 +1900,277 @@ Saravanan Kumar`;
               {/* DISCOVER HUB / PULSE NEWS */}
               {activeSidebarTab === "discover" && (
                 <div className="space-y-6">
-                  {/* Stats Row */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                    {[
-                      { label: "Active Job Indexes", value: "1,342 Opportunities", desc: "Across 250+ startups", icon: Briefcase, color: "text-[#ff385c]" },
-                      { label: "Funding Index Q2", value: "₹1.03 Lakh Crores Seeded", desc: "+14.2% Quarter on Quarter", icon: DollarSign, color: "text-emerald-500" },
-                      { label: "AI Startups Listed", value: "852 Global Projects", desc: "12 registered this week", icon: Building2, color: "text-blue-500" },
-                      { label: "Mean Salaries", value: "₹1.62 Crores / Yr", desc: "Top tech standard bias", icon: Award, color: "text-purple-500" }
-                    ].map((stat, i) => {
-                      const StatIcon = stat.icon;
-                      return (
-                        <div key={i} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm space-y-2">
-                          <div className={stat.color}>
-                            <StatIcon className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <span className="text-[10px] uppercase font-bold text-gray-400 block tracking-wider">{stat.label}</span>
-                            <span className="text-lg font-bold text-gray-900 block font-display">{stat.value}</span>
-                            <span className="text-[10px] text-gray-400 block">{stat.desc}</span>
-                          </div>
+                  {/* Majestic Rich Intro Hero Card replicating user's dashboard image precisely */}
+                  <div className="rounded-3xl bg-[#09090b] text-white overflow-hidden border border-zinc-900 shadow-2xl relative select-none">
+                    {/* Elegant technical grid line matrix overlay background to match screenshot */}
+                    <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none opacity-80 z-0"></div>
+                    
+                    {/* Soft red gradient glow mimicking screenshot mesh exactly */}
+                    <div className="absolute left-1/4 top-1/2 -translate-y-1/2 h-[350px] w-[350px] bg-[radial-gradient(circle,rgba(239,68,68,0.12)_0%,transparent_70%)] pointer-events-none rounded-full blur-3xl z-0"></div>
+                    
+                    <div className="p-6 sm:p-8 lg:p-10 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                      
+                      {/* Left Part: Title & Details & Dynamic Search */}
+                      <div className="lg:col-span-8 space-y-6 text-left">
+                        {/* Live active status pill */}
+                        <div className="inline-flex items-center gap-2 bg-[#ff385c]/10 border border-[#ff385c]/20 text-[#ff385c] px-3.5 py-1 rounded-full text-[10px] md:text-xs font-mono font-bold tracking-wider uppercase">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#ff385c] animate-pulse"></span>
+                          <span>LIVE • 12,418 OPEN ROLES UPDATED NOW</span>
                         </div>
-                      )
-                    })}
+                        
+                        {/* Beautiful Display Typography Headings */}
+                        <div className="space-y-1.5">
+                          <h1 className="text-3xl sm:text-4.5xl lg:text-5xl font-display font-black text-white tracking-tight leading-none">
+                            The intelligence layer <br className="hidden sm:inline" />
+                            for the <span className="text-[#ff385c] inline-block relative bg-gradient-to-r from-red-500 via-rose-500 to-pink-500 bg-clip-text text-transparent">AI ecosystem</span>
+                          </h1>
+                        </div>
+                        
+                        {/* Interactive Premium Search block */}
+                        <div className="bg-zinc-900/90 backdrop-blur-md p-1.5 rounded-2xl border border-zinc-800 flex flex-col sm:flex-row items-center gap-2 w-full max-w-2xl shadow-xl shadow-black/80">
+                          <div className="flex-1 flex items-center gap-2.5 px-3 w-full">
+                            <Search className="w-4.5 h-4.5 text-zinc-500 shrink-0" />
+                            <input
+                              type="text"
+                              placeholder="Search startups, founders, investors, jobs..."
+                              value={textSearch}
+                              onChange={(e) => setTextSearch(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  setSubmitSearch(textSearch);
+                                  triggerTXAndScrollToDirectory();
+                                }
+                              }}
+                              className="w-full py-2 bg-transparent text-sm focus:outline-none placeholder-zinc-500 text-white font-medium border-none outline-none ring-0 select-text"
+                            />
+                          </div>
+                          
+                          {/* Worldwide Indicator and Divider */}
+                          <div className="h-6 w-px bg-zinc-800 hidden sm:block"></div>
+                          <div className="flex items-center gap-2 px-3 shrink-0 text-zinc-400 text-xs font-semibold hidden sm:flex">
+                            <MapPin className="w-4 h-4 text-zinc-500 shrink-0" />
+                            <span>Worldwide</span>
+                          </div>
+                          
+                          {/* Search Button styled precisely in crimson color */}
+                          <button
+                            onClick={() => {
+                              setSubmitSearch(textSearch);
+                              triggerTXAndScrollToDirectory();
+                            }}
+                            className="w-full sm:w-auto px-6 py-2.5 bg-[#ff385c] hover:bg-[#e02e50] text-white text-xs sm:text-sm font-bold rounded-xl transition shadow-md shrink-0 active:scale-95"
+                          >
+                            Search
+                          </button>
+                        </div>
+                        
+                        {/* Sub-pills triggers */}
+                        <div className="flex flex-wrap items-center gap-2 pt-1">
+                          {[
+                            { label: "Job seekers", icon: "💼" },
+                            { label: "Founders", icon: "👥" },
+                            { label: "Investors", icon: "✨" },
+                            { label: "Recruiters", icon: "🤝" },
+                            { label: "Researchers", icon: "🔬" }
+                          ].map((pill) => (
+                            <button
+                              key={pill.label}
+                              onClick={() => {
+                                if (pill.label === "Job seekers") {
+                                  setActiveSidebarTab("jobs");
+                                } else if (pill.label === "Researchers") {
+                                  setActiveSidebarTab("jobs");
+                                  setActiveCategory("AI Researchers");
+                                  triggerToast("Filtered to highlight custom Research roles.");
+                                } else if (pill.label === "Founders") {
+                                  setActiveSidebarTab("founders");
+                                } else if (pill.label === "Investors") {
+                                  setActiveSidebarTab("funding");
+                                } else {
+                                  triggerToast(`Active Directory filtered for: ${pill.label}`);
+                                }
+                              }}
+                              className="px-3 py-1.5 rounded-xl border border-zinc-800 hover:border-zinc-700 bg-zinc-950 text-xs text-zinc-300 hover:text-white transition-all duration-150 flex items-center gap-1.5 font-semibold"
+                            >
+                              <span>{pill.icon}</span>
+                              <span className="text-[11px]">{pill.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                        
+                        {/* Description label of global connect */}
+                        <p className="text-[11px] md:text-sm text-zinc-500 font-medium leading-relaxed font-sans">
+                          25,000+ startups · 100,000+ founders · 8,400+ investors — all connected in one seamless live knowledge graph.
+                        </p>
+                      </div>
+                      
+                      {/* Right Part: Column matching "Just Posted" */}
+                      <div className="lg:col-span-4 bg-zinc-950/60 p-4 rounded-3xl border border-zinc-900 space-y-4 relative overflow-hidden backdrop-blur-xs">
+                        <div className="flex items-center justify-between border-b border-zinc-905 pb-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[#ff385c] text-xs">✨</span>
+                            <h2 className="text-xs font-mono font-bold text-zinc-400 uppercase tracking-widest">Just posted</h2>
+                          </div>
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#ff385c] animate-pulse"></span>
+                        </div>
+                        
+                        <div className="space-y-2.5">
+                          {[
+                            { companyId: "anthropic", companyName: "Anthropic", title: "Research Engineer, Alignment", tag: "AI Safety", pay: "$240k–$340k" },
+                            { companyId: "openai", companyName: "OpenAI", title: "Staff ML Engineer", tag: "Infrastructure", pay: "$280k–$380k" },
+                            { companyId: "xai", companyName: "xAI", title: "Senior AI Research Engineer", tag: "Language Models", pay: "$260k–$360k" },
+                          ].map((jp, i) => (
+                            <div
+                              key={i}
+                              onClick={() => {
+                                setTextSearch(jp.companyName);
+                                setSubmitSearch(jp.companyName);
+                                setActiveSidebarTab("jobs");
+                                if (jp.title.includes("Research")) {
+                                  setActiveCategory("AI Researchers");
+                                } else {
+                                  setActiveCategory("AI Infrastructure");
+                                }
+                                triggerToast(`Focused listings for ${jp.companyName}`);
+                              }}
+                              className="p-3.5 rounded-2xl bg-zinc-900/40 hover:bg-zinc-900 border border-zinc-900/60 hover:border-zinc-800 transition duration-150 cursor-pointer flex items-center justify-between gap-3 text-left group"
+                            >
+                              <div className="flex items-center gap-3 overflow-hidden">
+                                <CompanyLogo companyId={jp.companyId} companyName={jp.companyName} className="w-8.5 h-8.5 shrink-0 rounded-xl bg-zinc-950 border border-zinc-800/40 p-1" />
+                                <div className="overflow-hidden">
+                                  <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block leading-none">{jp.companyName}</span>
+                                  <h4 className="text-[11px] font-bold text-zinc-200 mt-1 leading-snug group-hover:text-[#ff385c] transition duration-150 truncate">{jp.title}</h4>
+                                  <span className="inline-block mt-1 text-[8px] bg-red-500/10 text-[#ff385c] px-2 py-0.5 rounded-md font-bold tracking-wide">
+                                    {jp.tag}
+                                  </span>
+                                </div>
+                              </div>
+                              
+                              <div className="text-right shrink-0">
+                                <span className="text-[10px] font-mono font-bold text-emerald-400 block">{jp.pay}</span>
+                                <span className="text-[8px] text-zinc-600 block mt-0.5 font-medium leading-none">Instant apply</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      
+                    </div>
+                    
+                    {/* Metrics bottom row */}
+                    <div className="border-t border-zinc-900 bg-zinc-950/80 px-6 py-4 sm:px-8 grid grid-cols-2 md:grid-cols-5 gap-4 text-left relative z-10">
+                      {[
+                        { label: "AI startups tracked", value: "25,000+" },
+                        { label: "Founder profiles", value: "100k+" },
+                        { label: "Active investors", value: "8,400+" },
+                        { label: "Open roles", value: "12,418" },
+                        { label: "Funding tracked (2026)", value: "$48.2B" }
+                      ].map((col, idx) => (
+                        <div key={idx} className={`space-y-0.5 ${idx !== 0 ? "md:border-l md:border-zinc-850 md:pl-5" : ""}`}>
+                          <span className="text-xl sm:text-2xl font-extrabold text-white block tracking-tight font-display">{col.value}</span>
+                          <span className="text-[9px] text-zinc-500 uppercase font-semibold tracking-wider block">{col.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Explore Roles by Category direct filters on the hub page */}
+                  <section className="space-y-3.5 relative z-10 pt-1 text-left">
+                    <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+                      <div>
+                        <h2 className="text-xs sm:text-sm font-extrabold text-gray-950 uppercase tracking-wider font-display">Explore Roles by Category</h2>
+                        <p className="text-[9px] text-gray-400 font-medium">Click on any role sector to immediately focus listings in the active index</p>
+                      </div>
+                      <button 
+                        onClick={() => {
+                          setActiveCategory("All");
+                          setActiveSidebarTab("jobs");
+                          triggerToast("Category filter cleared. Showing all opportunities.");
+                        }}
+                        className="text-[10px] text-brand hover:underline font-bold"
+                      >
+                        Clear Category Filter →
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+                      {[
+                        { id: "AI Researchers", label: "AI Researchers", desc: "RLHF, alignment, mechanistic interpretability", icon: "🔬" },
+                        { id: "Software Developers", label: "Software Developers", desc: "LLM agents, autocomplete compilers, frontend Tools", icon: "💻" },
+                        { id: "AI Product Managers", label: "AI Product Managers", desc: "Interfaces, prompts, release delivery, strategy", icon: "🎯" },
+                        { id: "AI Infrastructure", label: "AI Infrastructure", desc: "Compute clusters, LPUs, custom hardware grids", icon: "🌐" },
+                        { id: "AI Security", label: "AI Security", desc: "Red teaming, guardrails, abuse monitoring, safety", icon: "🛡️" },
+                        { id: "AI Voice & Media", label: "AI Voice & Media", desc: "Text-to-speech, sound wave, generative video, diffusion", icon: "🔊" }
+                      ].map((cat) => {
+                        const isCatActive = activeCategory === cat.id;
+                        return (
+                          <div
+                            key={cat.id}
+                            onClick={() => {
+                              setActiveCategory(cat.id);
+                              setActiveSidebarTab("jobs");
+                              triggerToast(`Navigated to active listings matching matches: ${cat.label}`);
+                            }}
+                            className={`p-3 bg-white rounded-xl border relative flex flex-col justify-between hover:border-brand/40 hover:shadow-2xs transition cursor-pointer select-none group ${
+                              isCatActive 
+                                ? "border-brand ring-1 ring-brand/25 bg-rose-50/5" 
+                                : "border-gray-105"
+                            }`}
+                          >
+                            <div>
+                              <div className="w-8 h-8 rounded-lg bg-[#ff385c]/5 text-[#ff385c] flex items-center justify-center text-sm font-bold border border-brand/10">
+                                {cat.icon}
+                              </div>
+                              <h3 className="text-[11px] sm:text-xs font-bold text-gray-950 mt-2 leading-tight group-hover:text-brand transition">
+                                {cat.label}
+                              </h3>
+                              <p className="text-[9px] text-gray-400 mt-1 block leading-normal line-clamp-2">
+                                {cat.desc}
+                              </p>
+                            </div>
+                            
+                            <div className="flex justify-end mt-2">
+                              <div className={`w-5 h-5 rounded-full flex items-center justify-center border text-[9px] transition ${
+                                isCatActive ? "bg-brand text-white border-brand" : "bg-rose-50/30 text-brand border-brand/10"
+                              }`}>
+                                →
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </section>
+                  
+                  {/* Horizontal Category Cards representing categories beautifully */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+                    {[
+                      { label: "Startups", count: "25,000+", icon: "🚀", tab: "startups", desc: "Foundational builder profiles" },
+                      { label: "Founders", count: "100,000+", icon: "👥", tab: "founders", desc: "Expert technical alignment rosters" },
+                      { label: "Investors", count: "8,400+", icon: "💵", tab: "funding", desc: "Venture partner indices" },
+                      { label: "Products", count: "42,000+", icon: "📦", tab: "discover", desc: "Shipped software products" },
+                      { label: "Funding rounds", count: "18,600+", icon: "📊", tab: "funding", desc: "Aggregated financial indices" }
+                    ].map((cat, i) => (
+                      <div
+                        key={i}
+                        onClick={() => {
+                          setActiveSidebarTab(cat.tab);
+                          triggerToast(`Navigated to the ${cat.label} workspace index.`);
+                        }}
+                        className="py-3 px-4 bg-white rounded-2xl border border-gray-105 hover:border-brand/35 hover:shadow-2xs transition duration-150 cursor-pointer text-left flex items-center gap-3 group relative overflow-hidden"
+                      >
+                        <div className="w-10 h-10 rounded-xl bg-[#ff385c]/5 text-brand flex items-center justify-center text-lg font-bold border border-brand/5">
+                          {cat.icon}
+                        </div>
+                        <div>
+                          <h3 className="text-xs font-bold text-gray-900 group-hover:text-brand transition tracking-tight leading-none">
+                            {cat.label}
+                          </h3>
+                          <span className="text-[10px] text-gray-400 font-bold block mt-1">{cat.count}</span>
+                          <span className="text-[8px] text-gray-400 block mt-0.5 leading-none font-medium truncate max-w-[100px]">{cat.desc}</span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
 
                   {/* AI Pulse Column */}
@@ -1746,18 +2393,670 @@ Saravanan Kumar`;
 
               {/* FOUNDERS TAB VIEW */}
               {activeSidebarTab === "founders" && (
-                <div className="bg-white p-8 rounded-3xl border border-gray-100 text-center space-y-4">
-                  <div className="text-5xl">👥</div>
-                  <h2 className="text-xl font-display font-bold text-gray-900">Founders Network Registry</h2>
-                  <p className="text-xs text-gray-400 max-w-lg mx-auto">
-                    The Atlas founder network maintains secure, authorized access channels for verified AI builders. Submissions to these profiles require valid organizational tokens.
-                  </p>
-                  <button
-                    onClick={() => triggerToast("Founder authentication is restricted to approved participants.")}
-                    className="px-6 py-2.5 bg-brand text-white text-xs font-semibold rounded-xl hover:bg-brand-hover transition"
-                  >
-                    Authenticate profile
-                  </button>
+                <div className="space-y-8 select-none">
+                  
+                  {/* Top Majestic Slate Banner */}
+                  <div className="rounded-3xl bg-[#09090b] text-white overflow-hidden border border-zinc-900 shadow-2xl relative">
+                    <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:28px_28px] pointer-events-none opacity-80 z-0"></div>
+                    <div className="absolute left-1/3 top-1/2 -translate-y-1/2 h-[300px] w-[300px] bg-[radial-gradient(circle,rgba(239,68,68,0.1)_0%,transparent_70%)] pointer-events-none rounded-full blur-3xl z-0"></div>
+                    
+                    <div className="p-6 sm:p-8 lg:p-10 relative z-10 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                      <div className="md:col-span-8 text-left space-y-4">
+                        <div className="inline-flex items-center gap-2 bg-[#ff385c]/15 border border-[#ff385c]/25 text-[#ff385c] px-3 py-1 rounded-full text-[10px] sm:text-xs font-mono font-bold tracking-wider uppercase">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#ff385c] animate-pulse"></span>
+                          <span>AT_LAS REGISTRY SYSTEM ACTIVE</span>
+                        </div>
+                        <h1 className="text-2xl sm:text-3xl lg:text-4.5xl font-display font-black text-white tracking-tight leading-none">
+                          Founders Intelligence &amp; <br className="hidden sm:inline" />
+                          <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-rose-500 to-pink-500">Model Deployment Roster</span>
+                        </h1>
+                        <p className="text-xs sm:text-sm text-zinc-400 font-medium leading-relaxed max-w-xl">
+                          Direct canonical data channels for verified artificial systems builders. Connect compute allocations, tracking benchmarks, and open active hires from top-tier research leads.
+                        </p>
+                        
+                        <div className="flex gap-3 pt-1">
+                          <button
+                            onClick={() => setShowApplyFounderModal(true)}
+                            className="px-5 py-2.5 bg-[#ff385c] hover:bg-[#e02e50] text-[#fff] text-xs font-bold rounded-xl transition shadow-md active:scale-97 flex items-center gap-1.5"
+                          >
+                            <span>🚀</span> Submit Builder Profile
+                          </button>
+                          <button
+                            onClick={() => {
+                              // Scroll to the estimator smoothly
+                              const el = document.getElementById("compute-cost-estimator-panel");
+                              if (el) el.scrollIntoView({ behavior: "smooth" });
+                              triggerToast("Scrolled to Compute budget cost calculator.");
+                            }}
+                            className="px-5 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 text-xs font-bold rounded-xl transition border border-zinc-800"
+                          >
+                            🛠️ Compute Estimator
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <div className="md:col-span-4 bg-zinc-950/40 p-5 rounded-2xl border border-zinc-900 text-left space-y-3 shrink-0 backdrop-blur-md">
+                        <div className="flex items-center justify-between border-b border-zinc-900 pb-2">
+                          <span className="text-[10px] font-mono text-[#ff385c] font-black uppercase tracking-wider">Spotlight quote</span>
+                          <span className="text-[9px] text-zinc-600 font-bold">Q2 Release</span>
+                        </div>
+                        <p className="text-[11px] text-zinc-300 italic leading-snug">
+                          "Clean reinforcement data is the absolute catalyst that turns raw base models into active agents."
+                        </p>
+                        <div className="flex items-center gap-2 pt-1">
+                          <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px]">📐</div>
+                          <div>
+                            <span className="text-[10px] font-bold text-white block leading-none">Alexandr Wang</span>
+                            <span className="text-[8px] text-zinc-500 block">Scale AI Founder</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Bottom stats rail */}
+                    <div className="border-t border-zinc-900 bg-zinc-950/60 px-6 py-3 grid grid-cols-2 lg:grid-cols-4 gap-4 text-left">
+                      {[
+                        { label: "Verified Technical Leaders", value: "100,000+" },
+                        { label: "Compute Cluster Indexes", value: "1,250 Aggregated" },
+                        { label: "Pre-training Runs Tracked", value: "320+ Logs" },
+                        { label: "Sovereign AI hubs", value: "14 Global" }
+                      ].map((item, id) => (
+                        <div key={id} className="space-y-0.5">
+                          <span className="text-sm font-black text-white block leading-none">{item.value}</span>
+                          <span className="text-[8px] text-zinc-500 uppercase font-extrabold tracking-wider">{item.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* TWO COLUMN GRID: Left column (Estimator & Submissions), Right column (Directories) */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    
+                    {/* LEFT COLUMN (Lg:col-span-5) - Estimator & Tools */}
+                    <div className="lg:col-span-5 space-y-6">
+                      
+                      {/* INTERACTIVE COMPUTE BUDGET ESTIMATOR CARD */}
+                      <div id="compute-cost-estimator-panel" className="bg-white p-5 rounded-3xl border border-gray-105 shadow-3xs space-y-5 text-left relative overflow-hidden">
+                        <div className="absolute right-0 top-0 w-24 h-24 bg-gradient-to-bl from-rose-50/20 via-transparent to-transparent pointer-events-none"></div>
+                        
+                        <div className="flex items-center justify-between border-b border-gray-50 pb-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-[#ff385c]/5 text-[#ff385c] flex items-center justify-center font-bold border border-brand/5">🧮</div>
+                            <div>
+                              <h2 className="text-xs sm:text-sm font-extrabold text-gray-950 uppercase tracking-wider font-display">Compute &amp; Training Estimator</h2>
+                              <p className="text-[9px] text-gray-400 font-medium">Empirical training cost modeled on Chinchilla Scaling laws</p>
+                            </div>
+                          </div>
+                          <span className="text-[9px] bg-[#ff385c]/10 text-[#ff385c] px-2 py-0.5 rounded-md font-mono font-bold uppercase">v3.5 Live</span>
+                        </div>
+
+                        <div className="space-y-4">
+                          {/* Slider 1: Parameter Size */}
+                          <div className="space-y-1.5">
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="text-gray-500 font-bold">Model Size (Parameters):</span>
+                              <span className="font-mono font-black text-brand bg-rose-50 px-2 py-0.5 rounded-md text-[11px]">{estParamsBillion}B Params</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="1"
+                              max="405"
+                              value={estParamsBillion}
+                              onChange={(e) => setEstParamsBillion(parseInt(e.target.value))}
+                              className="w-full h-1.5 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-[#ff385c]"
+                            />
+                            <div className="flex justify-between text-[8px] text-gray-400 font-medium font-mono">
+                              <span>1B (Edge)</span>
+                              <span>70B (Llama-3 Standard)</span>
+                              <span>405B (Frontier Heavy)</span>
+                            </div>
+                          </div>
+
+                          {/* Slider 2: Pretraining Tokens */}
+                          <div className="space-y-1.5">
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="text-gray-500 font-bold">Pre-training Tokens:</span>
+                              <span className="font-mono font-black text-brand bg-[#ff385c]/5 px-2 py-0.5 rounded-md text-[11px]">{(estTokensTrillion).toFixed(1)} Trillion</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="0.5"
+                              max="20"
+                              step="0.5"
+                              value={estTokensTrillion}
+                              onChange={(e) => setEstTokensTrillion(parseFloat(e.target.value))}
+                              className="w-full h-1.5 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-[#ff385c]"
+                            />
+                            <div className="flex justify-between text-[8px] text-gray-400 font-medium font-mono">
+                              <span>500B (Small)</span>
+                              <span>2.5T (Mistral Medium)</span>
+                              <span>20T (Dense Frontier)</span>
+                            </div>
+                          </div>
+
+                          {/* Slider 3: Cluster size (GPUs count) */}
+                          <div className="space-y-1.5">
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="text-gray-500 font-bold">Target Cluster Size (GPUs):</span>
+                              <span className="font-mono font-black text-brand bg-[#ff385c]/5 px-2 py-0.5 rounded-md text-[11px]">{estGpus} H100s/H200s</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="128"
+                              max="32768"
+                              step="128"
+                              value={estGpus}
+                              onChange={(e) => setEstGpus(parseInt(e.target.value))}
+                              className="w-full h-1.5 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-[#ff385c]"
+                            />
+                            <div className="flex justify-between text-[8px] text-gray-400 font-medium font-mono">
+                              <span>128 H100s</span>
+                              <span>2,048 (Power-user)</span>
+                              <span>32.7k (Supercomputer)</span>
+                            </div>
+                          </div>
+
+                          {/* Horizontal Segmented selector: GPU Hardware */}
+                          <div className="space-y-1.5">
+                            <span className="text-xs text-gray-500 font-bold">Deployment GPU Hardware Type:</span>
+                            <div className="grid grid-cols-3 gap-1.5">
+                              {[
+                                { id: "H105", label: "H200 SXM (Dense)", desc: "$2.45/hr rental" },
+                                { id: "H200", label: "H200 141GB (SXM5)", desc: "$3.25/hr rental" },
+                                { id: "Blackwell", label: "B200 Blackwell", desc: "$4.80/hr rental" }
+                              ].map((hw) => (
+                                <button
+                                  key={hw.id}
+                                  onClick={() => setEstHardware(hw.id)}
+                                  className={`p-2 rounded-xl text-center border transition-all ${
+                                    estHardware === hw.id
+                                      ? "border-brand bg-rose-50 text-brand scale-98 active:scale-95"
+                                      : "border-gray-100 hover:border-gray-200 bg-white text-gray-600"
+                                  }`}
+                                >
+                                  <span className="text-[10px] font-bold block leading-tight">{hw.label}</span>
+                                  <span className="text-[8px] text-gray-400 block mt-0.5 font-mono">{hw.desc}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Efficiency Slider (MFU) */}
+                          <div className="space-y-1.5">
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="text-gray-500 font-bold">Model FLOPS Utilization (MFU):</span>
+                              <span className="font-mono font-bold text-gray-600">{estMfu}% Eff.</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="20"
+                              max="60"
+                              value={estMfu}
+                              onChange={(e) => setEstMfu(parseInt(e.target.value))}
+                              className="w-full h-1"
+                              style={{ accentColor: "#ff385c" }}
+                            />
+                            <p className="text-[8px] text-gray-400 leading-none">Standard industry pretraining runs yield between 35% and 52% MFU.</p>
+                          </div>
+                        </div>
+
+                        {/* RESULTS PANEL */}
+                        {(() => {
+                          const results = calculateComputeEstimate(
+                            estParamsBillion,
+                            estTokensTrillion,
+                            estHardware === "H105" ? "H105" : estHardware === "H200" ? "H200" : "Blackwell",
+                            estGpus,
+                            estMfu
+                          );
+                          return (
+                            <div className="bg-slate-50/80 rounded-2xl border border-gray-100 p-4 space-y-3">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">Compute metrics estimate:</span>
+                                <span className="text-[9px] text-[#ff385c] font-mono leading-none">{results.recommendedHardware}</span>
+                              </div>
+                              
+                              <div className="grid grid-cols-3 gap-2 text-center">
+                                <div className="bg-white p-2.5 rounded-xl border border-gray-100 shadow-3xs space-y-0.5">
+                                  <span className="text-[8px] uppercase text-gray-400 font-bold block leading-none">Total compute</span>
+                                  <span className="text-xs sm:text-sm font-black text-gray-800 block font-mono tracking-tight">{results.flops}</span>
+                                </div>
+                                <div className="bg-white p-2.5 rounded-xl border border-gray-100 shadow-3xs space-y-0.5">
+                                  <span className="text-[8px] uppercase text-gray-400 font-bold block leading-none">Training Days</span>
+                                  <span className="text-xs sm:text-sm font-black text-gray-800 block font-mono tracking-tight">{results.gpuDays} Days</span>
+                                </div>
+                                <div className="bg-white p-2.5 rounded-xl border border-gray-100 shadow-3xs space-y-0.5">
+                                  <span className="text-[8px] uppercase text-[#ff385c] font-bold block leading-none">Cost allocation</span>
+                                  <span className="text-xs sm:text-sm font-black text-[#ff385c] block font-mono tracking-tight">{results.costEstimate}</span>
+                                </div>
+                              </div>
+                              
+                              <p className="text-[8px] text-gray-400 italic text-center leading-normal">
+                                Mathematical reference: FLOPS = 6 * Parameters * Tokens. Actual values fluctuate based on checkpoint frequencies and server network latency.
+                              </p>
+                            </div>
+                          );
+                        })()}
+                      </div>
+
+                      {/* QUICK SUBMISSION DIRECTORY GUIDE */}
+                      <div className="bg-[#ff385c]/5 p-4.5 rounded-3xl border border-[#ff385c]/10 text-left space-y-2">
+                        <span className="text-[#ff385c] text-xs">💡</span>
+                        <h4 className="text-xs font-bold text-gray-900 leading-none uppercase tracking-wide">Looking to raise compute funding?</h4>
+                        <p className="text-[11px] text-gray-500 leading-normal font-medium">
+                          Our active investment indexing matches AI-native builders with top tier VC firms (Sequoia, a16z, Lightspeed, Accel) as well as tier-1 compute aggregators. Register your profile to be discovered.
+                        </p>
+                      </div>
+
+                    </div>
+
+                    {/* RIGHT COLUMN (Lg:col-span-7) - Filterable Founder Cards */}
+                    <div className="lg:col-span-7 space-y-5">
+                      
+                      {/* Search and filter toolbar */}
+                      <div className="bg-white p-3 rounded-2xl border border-gray-105 shadow-3xs flex flex-col sm:flex-row gap-3 items-center justify-between text-left">
+                        <div className="flex-1 flex items-center gap-2 px-2 py-1 bg-gray-50 rounded-xl border border-gray-100 w-full">
+                          <Search className="w-4 h-4 text-gray-400 shrink-0" />
+                          <input
+                            type="text"
+                            placeholder="Filter builders by name, company, stack, focus..."
+                            value={founderSearchText}
+                            onChange={(e) => setFounderSearchText(e.target.value)}
+                            className="w-full py-1.5 bg-transparent text-xs focus:outline-none placeholder-gray-400 font-medium text-gray-900 border-none outline-none ring-0 select-text"
+                          />
+                          {founderSearchText && (
+                            <button
+                              onClick={() => setFounderSearchText("")}
+                              className="text-xs font-bold text-gray-400 hover:text-gray-600 px-1"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+                        
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-[10px] text-gray-400 font-mono font-bold uppercase">Source:</span>
+                          <span className="text-xs font-bold px-3 py-1 bg-rose-50 text-brand rounded-full border border-brand/5 leading-none">
+                            Active Atlas Network
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* FOUNDERS HUB GRID */}
+                      <div className="space-y-4">
+                        {(() => {
+                          const combined = [...customFounders, ...AT_LAS_FOUNDERS];
+                          const filtered = combined.filter((f) => {
+                            const query = founderSearchText.toLowerCase();
+                            return (
+                              f.name.toLowerCase().includes(query) ||
+                              f.company.toLowerCase().includes(query) ||
+                              f.focus.toLowerCase().includes(query) ||
+                              f.techStack.some((s) => s.toLowerCase().includes(query))
+                            );
+                          });
+
+                          if (filtered.length === 0) {
+                            return (
+                              <div className="p-12 text-center bg-white rounded-3xl border border-gray-100 text-slate-400 space-y-2">
+                                <span className="text-3xl">📭</span>
+                                <h3 className="text-sm font-bold text-gray-800">No matching founders found</h3>
+                                <p className="text-xs text-gray-400 max-w-sm mx-auto">Try refining your search terms or submit your personal technical profile to list instantly.</p>
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              {filtered.map((founder) => (
+                                <div
+                                  key={founder.id}
+                                  onClick={() => setSelectedFounder(founder)}
+                                  className="bg-white rounded-2xl border border-gray-105 hover:border-brand/40 hover:shadow-xs transition duration-200 cursor-pointer text-left flex flex-col justify-between group overflow-hidden"
+                                >
+                                  {/* Visual top highlight bar matching highlightColor */}
+                                  <div className="h-1 w-full" style={{ backgroundColor: founder.highlightColor || "#ff385c" }}></div>
+                                  
+                                  <div className="p-4 sm:p-5 space-y-4">
+                                    <div className="flex items-start justify-between gap-3">
+                                      <div className="flex items-center gap-3">
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold border ${founder.avatarBg}`}>
+                                          {founder.avatar}
+                                        </div>
+                                        <div>
+                                          <h3 className="text-sm font-bold text-gray-950 group-hover:text-brand transition tracking-tight leading-none">
+                                            {founder.name}
+                                          </h3>
+                                          <span className="text-[10px] text-gray-400 font-bold block mt-1 tracking-wide uppercase font-mono">
+                                            {founder.company}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      
+                                      {/* Capital Raised Badge */}
+                                      <span className="text-[9px] font-mono font-bold bg-[#ff385c]/5 text-[#ff385c] px-2.5 py-1 rounded-md">
+                                        {founder.capitalRaised} Raised
+                                      </span>
+                                    </div>
+                                    
+                                    <p className="text-xs text-slate-500 leading-snug line-clamp-3 min-h-[50px] font-medium">
+                                      {founder.bio}
+                                    </p>
+                                    
+                                    {/* Metrics strip */}
+                                    <div className="grid grid-cols-3 gap-2 border-t border-b border-gray-50/80 py-2">
+                                      {founder.metrics.slice(0, 3).map((metric, idx) => (
+                                        <div key={idx} className="space-y-0.5">
+                                          <span className="text-[8px] uppercase font-bold text-gray-400 block leading-none truncate max-w-[80px]">{metric.label}</span>
+                                          <span className="text-[10px] font-black text-gray-700 block font-mono leading-none">{metric.value}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                    
+                                    {/* Tech Keys Stack */}
+                                    <div className="flex flex-wrap gap-1">
+                                      {founder.techStack.map((stack) => (
+                                        <span key={stack} className="text-[9px] text-gray-500 font-bold bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-md leading-none">
+                                          {stack}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                  
+                                  {/* Card bottom action trigger */}
+                                  <div className="bg-gray-50/70 border-t border-gray-50 p-3 flex justify-between items-center text-[10px] font-bold text-[#ff385c] group-hover:bg-[#ff385c]/2 transition-all">
+                                    <span>View System Briefcase &amp; Quote Request</span>
+                                    <div className="w-5 h-5 rounded-full bg-[#ff385c]/5 text-[#ff385c] border border-brand/5 flex items-center justify-center text-[9px]">
+                                      →
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })()}
+                      </div>
+
+                    </div>
+                    
+                  </div>
+
+                  {/* ACTIVE SELECTED FOUNDER PROFILE DETAIL COLLAPSIBLE MODAL */}
+                  <AnimatePresence>
+                    {selectedFounder && (
+                      <div className="fixed inset-0 bg-black/65 backdrop-blur-xs flex items-center justify-center p-4 z-40" onClick={() => setSelectedFounder(null)}>
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="bg-white rounded-3xl max-w-lg w-full overflow-hidden border border-gray-100 shadow-2xl relative select-none"
+                        >
+                          <div className="h-2 w-full" style={{ backgroundColor: selectedFounder.highlightColor || "#ff385c" }}></div>
+                          
+                          <div className="p-6 sm:p-8 space-y-6 text-left">
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-center gap-3.5">
+                                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl font-bold border ${selectedFounder.avatarBg}`}>
+                                  {selectedFounder.avatar}
+                                </div>
+                                <div>
+                                  <h2 className="text-lg sm:text-xl font-display font-black text-slate-900 tracking-tight leading-none">{selectedFounder.name}</h2>
+                                  <span className="text-[11px] sm:text-xs font-mono font-bold text-gray-400 block mt-1 uppercase tracking-wider">{selectedFounder.company}</span>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => setSelectedFounder(null)}
+                                className="w-8 h-8 rounded-full hover:bg-slate-55 flex items-center justify-center text-gray-400 hover:text-slate-900 border border-gray-100 shadow-3xs transition cursor-pointer"
+                              >
+                                ✕
+                              </button>
+                            </div>
+
+                            <div className="space-y-4">
+                              <div className="space-y-1">
+                                <span className="text-[9px] uppercase font-bold text-gray-400 tracking-wider block">Operational Focus Field</span>
+                                <span className="text-xs font-black text-[#ff385c] bg-rose-50/50 border border-brand/10 px-2.5 py-1 rounded-md inline-block">
+                                  {selectedFounder.focus}
+                                </span>
+                              </div>
+
+                              <div className="space-y-1.5">
+                                <h4 className="text-xs font-bold text-slate-800">Builder biography &amp; Vision</h4>
+                                <p className="text-xs leading-relaxed text-gray-500 font-medium">
+                                  {selectedFounder.bio}
+                                </p>
+                              </div>
+
+                              {/* Highlighted Quote Box */}
+                              <div className="bg-[#ff385c]/5 border-l-3 border-[#ff385c] p-4 rounded-r-2xl italic text-[11px] text-gray-700 font-medium leading-relaxed">
+                                "{selectedFounder.quote}"
+                              </div>
+
+                              {/* Performance Metrics Block */}
+                              <div className="grid grid-cols-3 gap-3 bg-slate-50/50 border border-gray-110 p-3.5 rounded-2xl">
+                                {selectedFounder.metrics.map((metric, idx) => (
+                                  <div key={idx} className="space-y-0.5">
+                                    <span className="text-[8px] uppercase font-semibold text-slate-400 block truncate">{metric.label}</span>
+                                    <span className="text-xs font-black text-gray-800 block font-mono">{metric.value}</span>
+                                  </div>
+                                ))}
+                              </div>
+
+                              {/* Core tech stack used */}
+                              <div className="space-y-1.5">
+                                <span className="text-[9px] uppercase font-bold text-gray-400 tracking-wider block">Primary technical Stack</span>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {selectedFounder.techStack.map((tech) => (
+                                    <span key={tech} className="px-2.5 py-1 rounded-lg text-xs bg-white text-gray-600 font-bold border border-gray-100 shadow-3xs">
+                                      {tech}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Modal CTA actions */}
+                            <div className="pt-4 border-t border-gray-50 flex gap-2.5">
+                              <button
+                                onClick={() => {
+                                  setSelectedFounder(null);
+                                  setTextSearch(selectedFounder.company);
+                                  setSubmitSearch(selectedFounder.company);
+                                  setActiveSidebarTab("jobs");
+                                  triggerToast(`Navigated to active index opportunities at: ${selectedFounder.company}`);
+                                }}
+                                className="flex-1 py-2.5 bg-brand hover:bg-brand-hover text-[#fff] text-xs font-bold rounded-xl transition"
+                              >
+                                View {selectedFounder.company} Careers ({selectedFounder.openRoles})
+                              </button>
+                              <button
+                                onClick={() => {
+                                  triggerToast(`Authored secure handshake ping for verification to ${selectedFounder.name}.`);
+                                }}
+                                className="px-4 py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-600 text-xs font-semibold rounded-xl transition border border-gray-100"
+                              >
+                                Direct ping
+                              </button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      </div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* SUBMIT PROFILE WIZARD MODAL DIALOG */}
+                  <AnimatePresence>
+                    {showApplyFounderModal && (
+                      <div className="fixed inset-0 bg-black/65 backdrop-blur-xs flex items-center justify-center p-4 z-40" onClick={() => setShowApplyFounderModal(false)}>
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="bg-white rounded-3xl max-w-md w-full overflow-hidden border border-gray-105 shadow-2xl relative text-left select-none"
+                        >
+                          <div className="h-1.5 w-full bg-[#ff385c]"></div>
+                          
+                          <div className="p-6 space-y-5">
+                            <div className="flex items-center justify-between border-b border-gray-50 pb-3">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[#ff385c] text-lg">🚀</span>
+                                <div>
+                                  <h3 className="text-sm font-extrabold text-gray-950 uppercase tracking-wider font-display">Submit Builder Profile</h3>
+                                  <p className="text-[9px] text-gray-400 font-medium font-sans">Self-publish your technical roadmap profile instantly</p>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => setShowApplyFounderModal(false)}
+                                className="w-7 h-7 rounded-full hover:bg-gray-100 flex items-center justify-center text-slate-400 border border-gray-50 transition cursor-pointer"
+                              >
+                                ✕
+                              </button>
+                            </div>
+
+                            <div className="space-y-3">
+                              {/* Inputs */}
+                              <div className="space-y-1">
+                                <label className="text-[9px] uppercase font-bold text-gray-400">Founder full name</label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. Aditi Sharma"
+                                  value={newFounderName}
+                                  onChange={(e) => setNewFounderName(e.target.value)}
+                                  className="w-full text-xs p-2.5 bg-slate-50 border border-gray-100 rounded-xl focus:outline-none focus:bg-white text-gray-800"
+                                />
+                              </div>
+
+                              <div className="space-y-1">
+                                <label className="text-[9px] uppercase font-bold text-gray-400">Company Name</label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. Neural Agent Labs"
+                                  value={newFounderCompany}
+                                  onChange={(e) => setNewFounderCompany(e.target.value)}
+                                  className="w-full text-xs p-2.5 bg-slate-50 border border-gray-100 rounded-xl focus:outline-none focus:bg-white text-gray-800"
+                                />
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-1 font-sans">
+                                  <label className="text-[9px] uppercase font-bold text-gray-400">Capital Raised</label>
+                                  <select
+                                    value={newFounderCapital}
+                                    onChange={(e) => setNewFounderCapital(e.target.value)}
+                                    className="w-full text-xs p-2.5 bg-slate-50 border border-gray-100 rounded-xl font-bold text-gray-600 focus:outline-none"
+                                  >
+                                    <option>$400k - Pre-Seed</option>
+                                    <option>$1.5M - Seed</option>
+                                    <option>$5.0M - Series A</option>
+                                    <option>Bootstrapped</option>
+                                  </select>
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[9px] uppercase font-bold text-gray-400">Focus Sector</label>
+                                  <input
+                                    type="text"
+                                    placeholder="e.g. Agentic RAG"
+                                    value={newFounderFocus}
+                                    onChange={(e) => setNewFounderFocus(e.target.value)}
+                                    className="w-full text-xs p-2.5 bg-slate-50 border border-gray-100 rounded-xl focus:outline-none focus:bg-white text-gray-800"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="space-y-1">
+                                <label className="text-[9px] uppercase font-bold text-gray-400">Biography / Product pitch</label>
+                                <textarea
+                                  placeholder="What AGI, systems, or tools are you currently shipping in-market?"
+                                  value={newFounderBio}
+                                  onChange={(e) => setNewFounderBio(e.target.value)}
+                                  rows={2}
+                                  className="w-full text-xs p-2.5 bg-slate-50 border border-gray-100 rounded-xl focus:outline-none focus:bg-white text-gray-800"
+                                />
+                              </div>
+
+                              <div className="space-y-1">
+                                <label className="text-[9px] uppercase font-bold text-gray-400">Stack (comma separated)</label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. Python, PyTorch, Ray"
+                                  value={newFounderStack}
+                                  onChange={(e) => setNewFounderStack(e.target.value)}
+                                  className="w-full text-xs p-2.5 bg-slate-50 border border-gray-100 rounded-xl focus:outline-none focus:bg-white text-gray-800"
+                                />
+                              </div>
+
+                              <div className="space-y-1">
+                                <label className="text-[9px] uppercase font-bold text-gray-400">Primary Founder Quote</label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. Let's make computers feel human again."
+                                  value={newFounderQuote}
+                                  onChange={(e) => setNewFounderQuote(e.target.value)}
+                                  className="w-full text-xs p-2.5 bg-slate-50 border border-gray-100 rounded-xl focus:outline-none focus:bg-white text-gray-800"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="pt-3 border-t border-gray-50 flex gap-2 justify-end">
+                              <button
+                                onClick={() => setShowApplyFounderModal(false)}
+                                className="px-4 py-2 bg-slate-50 hover:bg-slate-100 text-gray-500 hover:text-slate-900 font-bold rounded-xl text-xs transition"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (!newFounderName || !newFounderCompany || !newFounderBio) {
+                                    triggerToast("⚠️ Mandatory name, company and bio values must be submitted.");
+                                    return;
+                                  }
+                                  
+                                  const customRec: AIFounder = {
+                                    id: `custom-founder-${Date.now()}`,
+                                    name: newFounderName,
+                                    company: newFounderCompany,
+                                    avatar: "🌱",
+                                    avatarBg: "bg-rose-50 text-[#ff385c] border-brand/10",
+                                    bio: newFounderBio,
+                                    focus: newFounderFocus || "General Artificial Intelligence",
+                                    techStack: newFounderStack ? newFounderStack.split(",").map(i => i.trim()) : ["Python", "Transformers"],
+                                    capitalRaised: newFounderCapital,
+                                    metrics: [
+                                      { label: "Community Rank", value: "Verified Active" },
+                                      { label: "Date Submitted", value: "Today" },
+                                      { label: "Status Badge", value: "Live" }
+                                    ],
+                                    quote: newFounderQuote || "We compute for what matters.",
+                                    openRoles: 0,
+                                    highlightColor: "#ff385c"
+                                  };
+
+                                  setCustomFounders([customRec, ...customFounders]);
+                                  setShowApplyFounderModal(false);
+                                  
+                                  // Reset form states
+                                  setNewFounderName("");
+                                  setNewFounderCompany("");
+                                  setNewFounderBio("");
+                                  setNewFounderFocus("");
+                                  setNewFounderStack("");
+                                  setNewFounderQuote("");
+
+                                  triggerToast("🎉 Builder profile successfully published to the live registry!");
+                                }}
+                                className="px-5 py-2 bg-brand text-white font-bold rounded-xl text-xs hover:bg-brand-hover shadow-sm transition"
+                              >
+                                Self-Publish profile
+                              </button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      </div>
+                    )}
+                  </AnimatePresence>
+
                 </div>
               )}
 
@@ -1832,7 +3131,7 @@ Saravanan Kumar`;
                         <div className="flex justify-between items-center pt-2 text-xs border-t border-gray-50">
                           <span className="text-gray-400 font-mono font-semibold">{paper.pages} PDF</span>
                           <button
-                            onClick={() => triggerToast(`Downloading ${paper.title}...`)}
+                            onClick={() => downloadResearchPaper(paper.title)}
                             className="text-brand font-bold text-xs hover:underline flex items-center gap-1"
                           >
                             Download paper →
@@ -1859,9 +3158,7 @@ Saravanan Kumar`;
                   {/* Detailed Job Header & controls */}
                   <div className="flex items-start justify-between border-b border-gray-50 pb-4">
                     <div className="flex gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center font-display text-2xl shrink-0">
-                        {selectedJob.companyLogo}
-                      </div>
+                      <CompanyLogo companyId={selectedJob.companyId} companyName={selectedJob.companyName} className="w-12 h-12 shrink-0" />
                       <div>
                         <h4 className="text-xs text-gray-400 font-bold uppercase tracking-wider">{selectedJob.companyName}</h4>
                         <h3 className="text-base font-bold text-gray-950 leading-tight">
@@ -1995,10 +3292,8 @@ Saravanan Kumar`;
               className="bg-white rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl border border-gray-100 flex flex-col max-h-[90vh]"
             >
               <div className="p-6 bg-slate-900 text-white border-b border-slate-800 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-slate-850 rounded-xl flex items-center justify-center border border-slate-800 text-xl font-display shadow-sm">
-                    {showApplyModal.companyLogo}
-                  </div>
+                <div className="flex items-center gap-3 text-slate-905">
+                  <CompanyLogo companyId={showApplyModal.companyId} companyName={showApplyModal.companyName} className="w-10 h-10 shrink-0 border border-slate-750" />
                   <div className="text-left">
                     <span className="text-[9px] text-[#ff385c] font-bold uppercase tracking-widest block font-mono">Stage Onboarding: Step {applyStep} of 4</span>
                     <h3 className="text-sm font-bold text-slate-100">
