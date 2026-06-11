@@ -2,6 +2,7 @@ export interface AIFounder {
   id: string;
   name: string;
   company: string;
+  companyId: string;
   avatar: string; // emoji or design placeholder
   avatarBg: string; // color classes
   bio: string;
@@ -19,6 +20,7 @@ export const AT_LAS_FOUNDERS: AIFounder[] = [
     id: "sam-altman",
     name: "Sam Altman",
     company: "OpenAI",
+    companyId: "openai",
     avatar: "🪐",
     avatarBg: "bg-emerald-50 text-emerald-600 border-emerald-100",
     bio: "Co-founded OpenAI with the mission of ensuring that artificial general intelligence benefits all of humanity. Pioneer of heavy scaling and GPT series models.",
@@ -38,6 +40,7 @@ export const AT_LAS_FOUNDERS: AIFounder[] = [
     id: "dario-amodei",
     name: "Dario Amodei",
     company: "Anthropic",
+    companyId: "anthropic",
     avatar: "💮",
     avatarBg: "bg-amber-50 text-amber-700 border-amber-100",
     bio: "Former VP of Research at OpenAI, co-founded Anthropic to build highly aligned, reliable, and steerable AI systems with Constitutional AI principles.",
@@ -57,6 +60,7 @@ export const AT_LAS_FOUNDERS: AIFounder[] = [
     id: "arthur-mensch",
     name: "Arthur Mensch",
     company: "Mistral AI",
+    companyId: "mistral",
     avatar: "⛰️",
     avatarBg: "bg-orange-50 text-orange-600 border-orange-150",
     bio: "Co-founded Mistral AI in Paris. Leading Europe’s open-weights revolution with fast, highly optimized Mixture of Experts (MoE) architectures.",
@@ -76,6 +80,7 @@ export const AT_LAS_FOUNDERS: AIFounder[] = [
     id: "alexandr-wang",
     name: "Alexandr Wang",
     company: "Scale AI",
+    companyId: "scale",
     avatar: "📐",
     avatarBg: "bg-blue-50 text-blue-600 border-blue-105",
     bio: "Founded Scale AI to provide the high-quality human-in-the-loop and synthetic training workflows necessary to power frontier AI architectures.",
@@ -95,6 +100,7 @@ export const AT_LAS_FOUNDERS: AIFounder[] = [
     id: "denis-yarats",
     name: "Denis Yarats",
     company: "Perplexity AI",
+    companyId: "perplexity",
     avatar: "🔍",
     avatarBg: "bg-teal-50 text-teal-700 border-teal-100",
     bio: "Co-founded Perplexity to replace traditional search engines with direct, real-time citation-backed answers derived by system execution swarms.",
@@ -114,6 +120,7 @@ export const AT_LAS_FOUNDERS: AIFounder[] = [
     id: "arvid-lunnemar",
     name: "Arvid Lunnemar",
     company: "Cursor (Anysphere)",
+    companyId: "cursor",
     avatar: "⚡",
     avatarBg: "bg-indigo-50 text-indigo-600 border-indigo-100",
     bio: "Pioneering AI-native developer setups at Anysphere. Built Cursor to make IDEs context-aware and agent-driven from the ground up.",

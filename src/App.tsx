@@ -46,6 +46,43 @@ import { AT_LAS_FOUNDERS, AIFounder, calculateComputeEstimate } from "./founders
 // Beautiful generic & brand-authentic company logo vectors mapped by companyId
 export function CompanyLogo({ companyId, companyName, className = "w-10 h-10" }: { companyId: string; companyName: string; className?: string }) {
   const normalizedId = companyId.toLowerCase();
+  const [imgError, setImgError] = useState(false);
+  
+  // Dynamic high-fidelity original brand domains
+  const domains: Record<string, string> = {
+    openai: "openai.com",
+    anthropic: "anthropic.com",
+    perplexity: "perplexity.ai",
+    cursor: "cursor.com",
+    elevenlabs: "elevenlabs.io",
+    mistral: "mistral.ai",
+    groq: "groq.com",
+    huggingface: "huggingface.co",
+    scale: "scale.com",
+    scaleai: "scale.com",
+    pinecone: "pinecone.io",
+    langchain: "langchain.com",
+    cohere: "cohere.com",
+    vercel: "vercel.com",
+    databricks: "databricks.com",
+    midjourney: "midjourney.com",
+  };
+
+  const domain = domains[normalizedId] || (companyName ? `${companyName.toLowerCase().replace(/[^a-z0-9]/g, "")}.com` : "");
+
+  if (domain && !imgError) {
+    return (
+      <div className={`flex items-center justify-center rounded-xl bg-white border border-gray-100 shadow-3xs p-1 shrink-0 overflow-hidden ${className}`}>
+        <img 
+          src={`https://logo.clearbit.com/${domain}`} 
+          alt={companyName || companyId}
+          referrerPolicy="no-referrer"
+          onError={() => setImgError(true)}
+          className="w-full h-full object-contain rounded-lg"
+        />
+      </div>
+    );
+  }
   
   if (normalizedId === "openai") {
     return (
@@ -2720,9 +2757,7 @@ Saravanan Kumar`;
                                   <div className="p-4 sm:p-5 space-y-4">
                                     <div className="flex items-start justify-between gap-3">
                                       <div className="flex items-center gap-3">
-                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold border ${founder.avatarBg}`}>
-                                          {founder.avatar}
-                                        </div>
+                                        <CompanyLogo companyId={founder.companyId} companyName={founder.company} className="w-10 h-10 shrink-0" />
                                         <div>
                                           <h3 className="text-sm font-bold text-gray-950 group-hover:text-brand transition tracking-tight leading-none">
                                             {founder.name}
@@ -2797,9 +2832,7 @@ Saravanan Kumar`;
                           <div className="p-6 sm:p-8 space-y-6 text-left">
                             <div className="flex items-start justify-between">
                               <div className="flex items-center gap-3.5">
-                                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl font-bold border ${selectedFounder.avatarBg}`}>
-                                  {selectedFounder.avatar}
-                                </div>
+                                <CompanyLogo companyId={selectedFounder.companyId} companyName={selectedFounder.company} className="w-14 h-14 shrink-0" />
                                 <div>
                                   <h2 className="text-lg sm:text-xl font-display font-black text-slate-900 tracking-tight leading-none">{selectedFounder.name}</h2>
                                   <span className="text-[11px] sm:text-xs font-mono font-bold text-gray-400 block mt-1 uppercase tracking-wider">{selectedFounder.company}</span>
@@ -3017,6 +3050,7 @@ Saravanan Kumar`;
                                     id: `custom-founder-${Date.now()}`,
                                     name: newFounderName,
                                     company: newFounderCompany,
+                                    companyId: newFounderCompany.toLowerCase().trim().replace(/[^a-z0-9]/g, "-"),
                                     avatar: "🌱",
                                     avatarBg: "bg-rose-50 text-[#ff385c] border-brand/10",
                                     bio: newFounderBio,
